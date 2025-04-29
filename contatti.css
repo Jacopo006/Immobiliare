@@ -1,0 +1,278 @@
+/* Contatti.css - Stili per la pagina contatti */
+
+/* Layout della pagina contatti */
+.contatti-container {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.contatti-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.contatti-form,
+.contatti-info {
+    flex: 1;
+    min-width: 300px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+/* Stile del form */
+.contatti-form h2,
+.contatti-info h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    color: #2c3e50;
+    font-weight: 600;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.contatti-form h2::after,
+.contatti-info h2::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 3px;
+    width: 50px;
+    background-color: #3498db;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 250px;
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    outline: none;
+}
+
+.form-privacy {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-privacy input {
+    width: auto;
+}
+
+.form-text {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+}
+
+.required {
+    color: #e74c3c;
+    margin-left: 0.2rem;
+}
+
+.submit-btn {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.submit-btn:hover {
+    background-color: #2980b9;
+}
+
+.submit-btn i {
+    font-size: 0.9rem;
+}
+
+/* Stile delle informazioni di contatto */
+.info-item {
+    margin-bottom: 1.5rem;
+}
+
+.info-title {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-item p, 
+.info-item address {
+    margin: 0;
+    padding-left: 1.8rem;
+    line-height: 1.6;
+    color: #555;
+    font-style: normal;
+}
+
+.info-item a {
+    color: #3498db;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.info-item a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+/* Social links */
+.social-links {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+}
+
+.social-links a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background-color: #f5f5f5;
+    color: #3498db;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.social-links a:hover {
+    background-color: #3498db;
+    color: white;
+    transform: translateY(-3px);
+}
+
+/* Mappa */
+.mappa {
+    margin-top: 1.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.mappa iframe {
+    width: 100%;
+    height: 250px;
+    border: none;
+}
+
+/* Alerts */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Stile di input con errore per validazione client-side */
+.error-input {
+    border-color: #e74c3c !important;
+    background-color: #fff8f8;
+}
+
+/* Banner piccolo */
+.banner-small {
+    background: linear-gradient(rgba(44, 62, 80, 0.7), rgba(44, 62, 80, 0.9)), url('../img/banner-contact.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.banner-small h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.banner-small p {
+    margin: 1rem 0 0;
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .contatti-content {
+        flex-direction: column;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .banner-small h1 {
+        font-size: 2rem;
+    }
+    
+    .banner-small p {
+        font-size: 1rem;
+    }
+}

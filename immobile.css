@@ -1,0 +1,566 @@
+/* style_immobile_dettaglio.css */
+
+/* Reset e stili base */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    color: #333;
+    line-height: 1.6;
+    background-color: #f5f7fa;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+    background-color: #f0f2f5;
+    padding: 10px 0;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.breadcrumb a {
+    color: #3498db;
+    text-decoration: none;
+}
+
+.breadcrumb a:hover {
+    text-decoration: underline;
+}
+
+.breadcrumb span {
+    color: #666;
+}
+
+/* Header immobile */
+.immobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.immobile-title h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.location {
+    font-size: 16px;
+    color: #666;
+}
+
+.location i {
+    color: #e74c3c;
+    margin-right: 5px;
+}
+
+.immobile-actions {
+    text-align: right;
+}
+
+.price {
+    font-size: 26px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 10px;
+}
+
+.btn-favorite {
+    display: inline-block;
+    background-color: #fff;
+    color: #e74c3c;
+    border: 1px solid #e74c3c;
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-favorite i {
+    margin-right: 5px;
+}
+
+.btn-favorite:hover, .btn-favorite.active {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+/* Contenuto immobile */
+.immobile-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    margin-bottom: 50px;
+}
+
+.immobile-gallery {
+    flex: 1;
+    min-width: 300px;
+}
+
+.main-image {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.main-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.categoria-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: #3498db;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.immobile-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.info-section {
+    background-color: white;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.info-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Caratteristiche immobile */
+.immobile-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.feature {
+    text-align: center;
+    padding: 15px 10px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+}
+
+.feature i {
+    font-size: 24px;
+    color: #3498db;
+    margin-bottom: 8px;
+}
+
+.feature span {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.feature strong {
+    display: block;
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+/* Descrizione */
+.description {
+    line-height: 1.8;
+    color: #555;
+}
+
+/* Sezione agente */
+.agente-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.agente-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.agente-avatar i {
+    font-size: 36px;
+    color: #3498db;
+}
+
+.agente-details h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.agente-details p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 3px;
+}
+
+.agente-details i {
+    width: 20px;
+    color: #3498db;
+}
+
+.btn-contact {
+    display: inline-block;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    margin-top: 10px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-contact:hover {
+    background-color: #2980b9;
+}
+
+/* Form di contatto */
+.contact-form .form-group {
+    margin-bottom: 20px;
+}
+
+.contact-form label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: #555;
+}
+
+.required {
+    color: #e74c3c;
+}
+
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form input[type="tel"],
+.contact-form textarea {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+}
+
+.contact-form textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.privacy-check {
+    display: flex;
+    align-items: flex-start;
+}
+
+.privacy-check input {
+    margin-top: 5px;
+    margin-right: 10px;
+}
+
+.privacy-check label {
+    font-size: 13px;
+}
+
+.privacy-check a {
+    color: #3498db;
+}
+
+.btn-submit {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: #219653;
+}
+
+/* Sezione immobili simili */
+#immobili-simili {
+    margin: 50px 0;
+}
+
+#immobili-simili h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.immobili-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.immobile-card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.immobile-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.immobile-img {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.immobile-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.immobile-card:hover .immobile-img img {
+    transform: scale(1.05);
+}
+
+.immobile-details {
+    padding: 20px;
+}
+
+.immobile-details h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+.immobile-details .price {
+    font-size: 18px;
+    margin: 10px 0;
+}
+
+.immobile-details .immobile-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    font-size: 13px;
+    color: #666;
+}
+
+.immobile-details .immobile-features span {
+    display: inline-block;
+}
+
+.immobile-details .immobile-features i {
+    color: #3498db;
+    margin-right: 5px;
+}
+
+.immobile-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.btn-details {
+    display: inline-block;
+    background-color: #3498db;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.btn-details:hover {
+    background-color: #2980b9;
+}
+
+.btn-favorite {
+    display: inline-block;
+    border: 1px solid #e74c3c;
+    color: #e74c3c;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btn-favorite:hover {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* Nessun immobile simile */
+.no-similar {
+    text-align: center;
+    color: #666;
+    margin: 30px 0;
+}
+
+/* Pulsante visualizza tutti */
+.view-all {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.btn-view-all {
+    display: inline-block;
+    background-color: #f0f2f5;
+    color: #3498db;
+    border: 1px solid #3498db;
+    padding: 10px 20px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 15px;
+    transition: all 0.3s ease;
+}
+
+.btn-view-all:hover {
+    background-color: #3498db;
+    color: white;
+}
+/* Stile per il bottone Acquista */
+.btn-purchase {
+    display: inline-block;
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    margin-left: 10px;
+}
+
+.btn-purchase:hover {
+    background-color: #219653;
+}
+
+.btn-purchase i {
+    margin-right: 5px;
+}
+
+/* Miglioramenti per la sezione bottoni negli immobili simili */
+.action-buttons {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.view-details {
+    margin-top: 15px;
+}
+
+.immobile-actions {
+    display: flex;
+    flex-direction: column;
+    margin-top: 15px;
+}
+
+/* Aggiunta responsività per i bottoni */
+@media (max-width: 576px) {
+    .action-buttons {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .btn-purchase {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .immobile-header {
+        flex-direction: column;
+    }
+    
+    .immobile-actions {
+        text-align: left;
+        margin-top: 15px;
+    }
+    
+    .immobile-features {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .agente-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .btn-favorite {
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .immobile-features {
+        grid-template-columns: 1fr;
+    }
+    
+    .immobile-details .immobile-features {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
