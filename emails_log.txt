@@ -1,0 +1,37 @@
+=== 2025-05-06 10:45:03 ===
+EMAIL UTENTE:
+A: mersio@gmail.com
+Oggetto: Conferma prenotazione immobile Monolocale vista mare
+Messaggio:
+Gentile Paolo Merisio,
+
+Grazie per aver prenotato l'immobile: Monolocale vista mare
+
+Effettua un bonifico di 12.000,00 € alle seguenti coordinate:
+IBAN: IT12A0123456789000000123456
+Intestatario: Immobiliare Srl
+Causale: Acconto immobile ID 61 - bonifico_1746521103_4
+
+Verrai contattato da un nostro agente.
+Telefono: 325346457476567
+Indirizzo: Via Fermi
+
+Cordiali saluti,
+Immobiliare
+
+EMAIL ADMIN:
+A: admin@immobiliare.it
+Oggetto: Nuova prenotazione immobile ID 61
+Messaggio:
+Prenotazione effettuata:
+
+Utente: Paolo Merisio
+Email: mersio@gmail.com
+Telefono: 325346457476567
+Metodo: bonifico
+Stato: pending
+Pagamento ID: bonifico_1746521103_4
+
+
+===============================
+

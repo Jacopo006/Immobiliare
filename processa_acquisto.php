@@ -1,124 +1,188 @@
 <?php
 session_start();
+header('Content-Type: application/json');
 
-// Verifica se l'utente è loggato
 if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'utente') {
-    $_SESSION['error_message'] = "Devi effettuare l'accesso come utente per acquistare un immobile.";
-    header('Location: login_utente.php');
+    echo json_encode(['success' => false, 'error' => 'Devi effettuare l\'accesso come utente per acquistare un immobile.']);
     exit();
 }
 
-// Verifica se il form è stato inviato
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    $_SESSION['error_message'] = "Errore: richiesta non valida.";
-    header('Location: immobili.php');
+if (!isset($_POST['id_immobile'], $_POST['prezzo'], $_POST['acconto'], $_POST['metodo_pagamento'])) {
+    echo json_encode(['success' => false, 'error' => 'Dati mancanti per completare l\'acquisto.']);
     exit();
 }
 
-// Verifica che tutti i campi obbligatori siano presenti
-$required_fields = ['id_immobile', 'prezzo', 'telefono', 'indirizzo', 'tipo_acquisto', 'metodo_pagamento', 'terms'];
-foreach ($required_fields as $field) {
-    if (!isset($_POST[$field]) || empty($_POST[$field])) {
-        $_SESSION['error_message'] = "Tutti i campi obbligatori devono essere compilati.";
-        header('Location: acquista.php?id=' . $_POST['id_immobile']);
-        exit();
-    }
-}
-
-// Includi il file di configurazione
-include 'config.php';
+require 'config.php';
+require_once 'vendor/autoload.php';
+\Stripe\Stripe::setApiKey('sk_test_51RLft5R6k5lJFmZtpczLwpqKMMvNunZlNBF3dERMWtxnsqHRzkIBhmLzlOjTydF9SHrfYsgMZACVbOpbcSnwnH6700iL4DDRIt');
 
 $id_immobile = (int)$_POST['id_immobile'];
 $id_utente = $_SESSION['user_id'];
 $prezzo = (float)$_POST['prezzo'];
-$telefono = $conn->real_escape_string($_POST['telefono']);
-$indirizzo = $conn->real_escape_string($_POST['indirizzo']);
-$tipo_acquisto = $conn->real_escape_string($_POST['tipo_acquisto']);
-$metodo_pagamento = $conn->real_escape_string($_POST['metodo_pagamento']);
-$note = isset($_POST['note']) ? $conn->real_escape_string($_POST['note']) : '';
+$acconto = (float)$_POST['acconto'];
+$metodo_pagamento = $_POST['metodo_pagamento'];
+$tipo_acquisto = $_POST['tipo_acquisto'];
+$note = $_POST['note'] ?? '';
+$telefono = $_POST['telefono'] ?? '';
+$indirizzo = $_POST['indirizzo'] ?? '';
 
-// Verifica che l'immobile esista e sia disponibile
-$sql_check = "SELECT * FROM immobili WHERE id = ? AND stato = 'disponibile'";
-$stmt_check = $conn->prepare($sql_check);
-$stmt_check->bind_param("i", $id_immobile);
-$stmt_check->execute();
-$result_check = $stmt_check->get_result();
+$sql = "SELECT * FROM immobili WHERE id = ? AND stato = 'disponibile'";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $id_immobile);
+$stmt->execute();
+$result = $stmt->get_result();
 
-if ($result_check->num_rows == 0) {
-    $_SESSION['error_message'] = "L'immobile selezionato non è più disponibile.";
-    header('Location: immobili.php');
+if ($result->num_rows == 0) {
+    echo json_encode(['success' => false, 'error' => 'L\'immobile selezionato non è disponibile.']);
     exit();
 }
 
-// Inizia transazione
-$conn->begin_transaction();
+$immobile = $result->fetch_assoc();
 
-try {
-    // Aggiorna i dati dell'utente se necessario
-    $sql_update_utente = "UPDATE utenti SET telefono = ?, indirizzo = ? WHERE id = ?";
-    $stmt_update_utente = $conn->prepare($sql_update_utente);
-    $stmt_update_utente->bind_param("ssi", $telefono, $indirizzo, $id_utente);
-    $stmt_update_utente->execute();
-    
-    // Inserisci la transazione nel database
-    $sql_transazione = "INSERT INTO transazioni (id_utente, id_immobile, importo, tipo, data_transazione, metodo_pagamento, note, stato_transazione) 
-                        VALUES (?, ?, ?, ?, NOW(), ?, ?, 'in_corso')";
-    $stmt_transazione = $conn->prepare($sql_transazione);
-    $stmt_transazione->bind_param("iidsss", $id_utente, $id_immobile, $prezzo, $tipo_acquisto, $metodo_pagamento, $note);
-    $stmt_transazione->execute();
-    
-    // Ottieni l'ID della transazione inserita
-    $id_transazione = $conn->insert_id;
-    
-    // Aggiorna lo stato dell'immobile
-    $nuovo_stato = ($tipo_acquisto == 'acquisto') ? 'venduto' : 'affittato';
-    $sql_update_immobile = "UPDATE immobili SET stato = ? WHERE id = ?";
-    $stmt_update_immobile = $conn->prepare($sql_update_immobile);
-    $stmt_update_immobile->bind_param("si", $nuovo_stato, $id_immobile);
-    $stmt_update_immobile->execute();
-    
-    // Rimuovi l'immobile dai preferiti degli utenti (se presente)
-    $sql_delete_preferiti = "DELETE FROM preferiti WHERE id_immobile = ?";
-    $stmt_delete_preferiti = $conn->prepare($sql_delete_preferiti);
-    $stmt_delete_preferiti->bind_param("i", $id_immobile);
-    $stmt_delete_preferiti->execute();
-    
-    // Commit della transazione
-    $conn->commit();
-    
-    // Ottieni i dettagli dell'immobile per la conferma
-    $sql_immobile = "SELECT i.nome, i.prezzo, a.email AS agente_email, a.nome AS agente_nome, a.cognome AS agente_cognome
-                    FROM immobili i
-                    LEFT JOIN agenti_immobiliari a ON i.agente_id = a.id
-                    WHERE i.id = ?";
-    $stmt_immobile = $conn->prepare($sql_immobile);
-    $stmt_immobile->bind_param("i", $id_immobile);
-    $stmt_immobile->execute();
-    $result_immobile = $stmt_immobile->get_result();
-    $immobile = $result_immobile->fetch_assoc();
+$payment_id = null;
+$payment_status = 'pending';
 
-    // Invia email di conferma all'utente (questa funzione dovrebbe essere implementata)
-    if (function_exists('inviaEmailConfermaAcquisto')) {
-        inviaEmailConfermaAcquisto($_SESSION['user_email'], $immobile['nome'], $prezzo, $tipo_acquisto, $id_transazione);
+if ($metodo_pagamento === 'carta') {
+    if (!isset($_POST['stripeToken'])) {
+        echo json_encode(['success' => false, 'error' => 'Token Stripe mancante.']);
+        exit();
     }
-    
-    // Invia notifica all'agente (questa funzione dovrebbe essere implementata)
-    if (!empty($immobile['agente_email']) && function_exists('inviaNotificaAgente')) {
-        inviaNotificaAgente($immobile['agente_email'], $immobile['nome'], $_SESSION['user_name'], $_SESSION['user_email'], $telefono, $tipo_acquisto);
+
+    $token = $_POST['stripeToken'];
+    $amount_cents = $acconto * 100;
+
+    try {
+        $customer = \Stripe\Customer::create([
+            'email' => $_SESSION['user_email'],
+            'source' => $token,
+        ]);
+
+        $charge = \Stripe\Charge::create([
+            'amount' => (int)$amount_cents,
+            'currency' => 'eur',
+            'description' => 'Acconto per immobile ID ' . $id_immobile,
+            'customer' => $customer->id,
+            'metadata' => [
+                'id_immobile' => $id_immobile,
+                'id_utente' => $id_utente,
+                'tipo' => 'acconto'
+            ]
+        ]);
+
+        $payment_id = $charge->id;
+        $payment_status = $charge->status === 'succeeded' ? 'completed' : 'failed';
+
+        if ($payment_status !== 'completed') {
+            echo json_encode(['success' => false, 'error' => 'Pagamento fallito.']);
+            exit();
+        }
+    } catch (\Exception $e) {
+        echo json_encode(['success' => false, 'error' => 'Errore pagamento: ' . $e->getMessage()]);
+        exit();
     }
-    
-    // Imposta messaggio di successo e reindirizza alla pagina di conferma
-    $_SESSION['success_message'] = "La tua richiesta di " . ($tipo_acquisto == 'acquisto' ? 'acquisto' : 'affitto') . " è stata inviata con successo. Un nostro agente ti contatterà presto per finalizzare la transazione.";
-    header('Location: conferma_acquisto.php?id=' . $id_transazione);
-    
-} catch (Exception $e) {
-    // In caso di errore, esegui il rollback della transazione
-    $conn->rollback();
-    
-    $_SESSION['error_message'] = "Si è verificato un errore durante l'elaborazione della richiesta. Riprova più tardi.";
-    header('Location: immobili.php');
+} elseif ($metodo_pagamento === 'bonifico') {
+    $payment_status = 'pending';
+    $payment_id = 'bonifico_' . time() . '_' . $id_utente;
+}
+
+// Inserimento nel database
+$sql_acquisto = "INSERT INTO acquisti (
+    id_immobile, 
+    id_utente, 
+    acconto, 
+    metodo_pagamento, 
+    tipo_acquisto, 
+    stato_pagamento, 
+    payment_id, 
+    note, 
+    data_acquisto
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+
+$stmt_acquisto = $conn->prepare($sql_acquisto);
+$stmt_acquisto->bind_param(
+    "idssssss",
+    $id_immobile,
+    $id_utente,
+    $acconto,
+    $metodo_pagamento,
+    $tipo_acquisto,
+    $payment_status,
+    $payment_id,
+    $note
+);
+
+if (!$stmt_acquisto->execute()) {
+    if ($metodo_pagamento === 'carta' && $payment_status === 'completed') {
+        error_log("Errore inserimento acquisto. ID pagamento: $payment_id");
+    }
+    echo json_encode(['success' => false, 'error' => 'Errore nel salvataggio dell\'acquisto.']);
     exit();
 }
 
-$conn->close(); // Chiudi la connessione
-?>
+$id_acquisto = $conn->insert_id;
+
+// Aggiorna stato immobile
+$nuovo_stato = 'in_trattativa';
+$sql_update = "UPDATE immobili SET stato = ? WHERE id = ?";
+$stmt_update = $conn->prepare($sql_update);
+$stmt_update->bind_param("si", $nuovo_stato, $id_immobile);
+$stmt_update->execute();
+
+// INIZIO MODIFICHE - Registrazione email in file di log invece dell'invio
+// Prepara i contenuti delle email ma salvali in un file di log invece di inviarli
+
+$email_utente = $_SESSION['user_email'];
+$nome_utente = $_SESSION['user_name'];
+$oggetto = "Conferma prenotazione immobile " . $immobile['nome'];
+
+$messaggio = "Gentile $nome_utente,\n\n";
+$messaggio .= "Grazie per aver prenotato l'immobile: " . $immobile['nome'] . "\n\n";
+
+if ($metodo_pagamento === 'carta') {
+    $messaggio .= "Pagamento completato con successo. Acconto: " . number_format($acconto, 2, ',', '.') . " €.\n";
+    $messaggio .= "ID Transazione: $payment_id\n\n";
+} else {
+    $messaggio .= "Effettua un bonifico di " . number_format($acconto, 2, ',', '.') . " € alle seguenti coordinate:\n";
+    $messaggio .= "IBAN: IT12A0123456789000000123456\n";
+    $messaggio .= "Intestatario: Immobiliare Srl\n";
+    $messaggio .= "Causale: Acconto immobile ID $id_immobile - $payment_id\n\n";
+}
+
+$messaggio .= "Verrai contattato da un nostro agente.\nTelefono: $telefono\nIndirizzo: $indirizzo\n\n";
+$messaggio .= "Cordiali saluti,\nImmobiliare";
+
+// Email admin
+$email_admin = "admin@immobiliare.it";
+$oggetto_admin = "Nuova prenotazione immobile ID $id_immobile";
+$messaggio_admin = "Prenotazione effettuata:\n\n";
+$messaggio_admin .= "Utente: $nome_utente\nEmail: $email_utente\nTelefono: $telefono\n";
+$messaggio_admin .= "Metodo: $metodo_pagamento\nStato: $payment_status\nPagamento ID: $payment_id\n";
+
+// Registra le email in un file di log (solo in ambiente di sviluppo)
+if ($_SERVER['SERVER_NAME'] == 'localhost' || $_SERVER['SERVER_NAME'] == '127.0.0.1') {
+    $log_file = 'emails_log.txt';
+    $log_content = "=== " . date('Y-m-d H:i:s') . " ===\n";
+    $log_content .= "EMAIL UTENTE:\n";
+    $log_content .= "A: $email_utente\n";
+    $log_content .= "Oggetto: $oggetto\n";
+    $log_content .= "Messaggio:\n$messaggio\n\n";
+    $log_content .= "EMAIL ADMIN:\n";
+    $log_content .= "A: $email_admin\n";
+    $log_content .= "Oggetto: $oggetto_admin\n";
+    $log_content .= "Messaggio:\n$messaggio_admin\n\n";
+    $log_content .= "===============================\n\n";
+    
+    file_put_contents($log_file, $log_content, FILE_APPEND);
+}
+// FINE MODIFICHE
+
+// Risposta finale
+echo json_encode([
+    'success' => true,
+    'message' => 'Acquisto registrato.',
+    'redirect' => 'miei_acquisti.php',
+    'id_acquisto' => $id_acquisto,
+    'payment_status' => $payment_status
+]);
+
+$conn->close();

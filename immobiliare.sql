@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Apr 28, 2025 alle 18:02
+-- Creato il: Mag 06, 2025 alle 10:49
 -- Versione del server: 10.4.32-MariaDB
 -- Versione PHP: 8.2.12
 
@@ -22,6 +22,34 @@ SET time_zone = "+00:00";
 --
 CREATE DATABASE IF NOT EXISTS `immobiliare` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `immobiliare`;
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `acquisti`
+--
+
+DROP TABLE IF EXISTS `acquisti`;
+CREATE TABLE `acquisti` (
+  `id` int(11) NOT NULL,
+  `id_immobile` int(11) NOT NULL,
+  `id_utente` int(11) NOT NULL,
+  `acconto` decimal(10,2) DEFAULT NULL,
+  `metodo_pagamento` varchar(50) DEFAULT NULL,
+  `tipo_acquisto` varchar(50) DEFAULT NULL,
+  `stato_pagamento` varchar(50) DEFAULT NULL,
+  `payment_id` varchar(100) DEFAULT NULL,
+  `note` text DEFAULT NULL,
+  `data_acquisto` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `acquisti`
+--
+
+INSERT INTO `acquisti` (`id`, `id_immobile`, `id_utente`, `acconto`, `metodo_pagamento`, `tipo_acquisto`, `stato_pagamento`, `payment_id`, `note`, `data_acquisto`) VALUES
+(1, 60, 4, 40000.00, 'bonifico', 'acquisto', 'pending', 'bonifico_1746520774_4', '', '2025-05-06 08:39:34'),
+(2, 61, 4, 12000.00, 'bonifico', 'acquisto', 'pending', 'bonifico_1746521103_4', '', '2025-05-06 08:45:03');
 
 -- --------------------------------------------------------
 
@@ -122,9 +150,8 @@ CREATE TABLE `immobili` (
 --
 
 INSERT INTO `immobili` (`id`, `nome`, `descrizione`, `prezzo`, `immagine`, `categoria_id`, `agente_id`, `stato`, `data_inserimento`, `metri_quadri`, `stanze`, `bagni`, `citta`, `provincia`) VALUES
-(59, 'Appartamento moderno', 'Appartamento moderno in zona centrale', 320000.00, 'casa1.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 120, 5, 2, 'Roma', 'RM'),
-(60, 'Villa con giardino', 'Villa spaziosa con giardino privato', 400000.00, 'casa2.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 180, 6, 3, 'Milano', 'MI'),
-(61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE'),
+(60, 'Villa con giardino', 'Villa spaziosa con giardino privato', 400000.00, 'casa2.jpg', 2, 2, '', '2025-04-18 19:27:21', 180, 6, 3, 'Milano', 'MI'),
+(61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, '', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE'),
 (62, 'Appartamento economico', 'Appartamento economico vicino ai servizi', 95000.00, 'casa4.jpg', 1, 2, 'disponibile', '2025-04-18 19:27:21', 60, 2, 1, 'Napoli', 'NA'),
 (63, 'Villa bifamiliare', 'Villa grande adatta per due famiglie', 480000.00, 'casa5.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 210, 8, 4, 'Verona', 'VR'),
 (64, 'Monolocale centrale', 'Monolocale perfetto per studenti', 85000.00, 'casa6.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 35, 1, 1, 'Pisa', 'PI'),
@@ -151,6 +178,13 @@ CREATE TABLE `preferiti` (
   `id_immobile` int(11) NOT NULL,
   `data_aggiunta` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `preferiti`
+--
+
+INSERT INTO `preferiti` (`id`, `id_utente`, `id_immobile`, `data_aggiunta`) VALUES
+(12, 3, 62, '2025-04-29 07:55:29');
 
 -- --------------------------------------------------------
 
@@ -194,11 +228,18 @@ CREATE TABLE `utenti` (
 INSERT INTO `utenti` (`id`, `nome`, `cognome`, `email`, `password`, `data_registrazione`, `telefono`, `indirizzo`, `stato`) VALUES
 (1, 'Mario', 'Rossi', 'mario.rossi@example.com', 'password123', '2025-04-17 08:08:16', '3331234567', 'Via Roma, 10, Milano', 'attivo'),
 (2, 'Giulia', 'Verdi', 'giulia.verdi@example.com', 'password456', '2025-04-17 08:08:16', '3339876543', 'Via Garibaldi, 20, Roma', 'attivo'),
-(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$us589PSDAhBq4g.si4VVp.AcMramX5HtnJNevmzxryHEkiAjvFhwi', '2025-04-17 08:19:11', '3518966972', NULL, 'attivo');
+(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$us589PSDAhBq4g.si4VVp.AcMramX5HtnJNevmzxryHEkiAjvFhwi', '2025-04-17 08:19:11', '3518966972', NULL, 'attivo'),
+(4, 'Paolo', 'Merisio', 'mersio@gmail.com', '$2y$10$ogn.m7vh8bnB9B4pPvICD.JNoSkePTQ.89Lh/kLFYVRArhHtWx/3S', '2025-05-06 07:56:52', '325346457476567', NULL, 'attivo');
 
 --
 -- Indici per le tabelle scaricate
 --
+
+--
+-- Indici per le tabelle `acquisti`
+--
+ALTER TABLE `acquisti`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indici per le tabelle `agenti_immobiliari`
@@ -255,6 +296,12 @@ ALTER TABLE `utenti`
 --
 
 --
+-- AUTO_INCREMENT per la tabella `acquisti`
+--
+ALTER TABLE `acquisti`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT per la tabella `agenti_immobiliari`
 --
 ALTER TABLE `agenti_immobiliari`
@@ -282,7 +329,7 @@ ALTER TABLE `immobili`
 -- AUTO_INCREMENT per la tabella `preferiti`
 --
 ALTER TABLE `preferiti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT per la tabella `transazioni`
@@ -294,7 +341,7 @@ ALTER TABLE `transazioni`
 -- AUTO_INCREMENT per la tabella `utenti`
 --
 ALTER TABLE `utenti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Limiti per le tabelle scaricate

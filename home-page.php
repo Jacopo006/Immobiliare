@@ -28,11 +28,11 @@ $result_agenti = $conn->query($sql_agenti);
 <header>
     <nav>
     <!-- Icona casetta cliccabile verso login_agente.php -->
-            <a href="login_agente.php" style="text-decoration:none;">
+        <a href="login_agente.php" style="text-decoration:none;">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#3498db" viewBox="0 0 24 24">
-                <path d="M12 3l8 7h-3v7h-4v-5h-2v5H7v-7H4l8-7z"/>
+                <path d="M3 13h18v8H3v-8zm2 2v4h2v-4H5zm4 0v4h2v-4H9zm4 0v4h2v-4h-2zm4 0v4h2v-4h-2zM3 3h18v8H3V3zm2 2v4h2V5H5zm4 0v4h2V5H9zm4 0v4h2V5h-2zm4 0v4h2V5h-2z"/>
             </svg>
-            </a>
+        </a>
 
         <ul>
             <li><a href="home-page.php"><i class="fas fa-home"></i> Home</a></li>
@@ -57,7 +57,6 @@ $result_agenti = $conn->query($sql_agenti);
         </ul>
     </nav>
 </header>
-
     <!-- Banner -->
     <section id="banner">
         <div class="banner-content">
@@ -74,7 +73,6 @@ $result_agenti = $conn->query($sql_agenti);
             <a href="#immobili" class="cta-button">Scopri le Nostre Offerte</a>
         </div>
     </section>
-
     <!-- Immobili in Evidenza -->
     <section id="immobili">
         <h2>Immobili in Evidenza</h2>
@@ -103,7 +101,6 @@ $result_agenti = $conn->query($sql_agenti);
     <!-- Agenti Immobiliari -->
     <section id="agenti">
         <h2>I Nostri Esperti Immobiliari</h2>
-
         <div class="agenti-container">
             <?php
             if ($result_agenti->num_rows > 0) {
@@ -124,7 +121,6 @@ $result_agenti = $conn->query($sql_agenti);
             ?>
         </div>
     </section>
-
     <!-- Footer -->
     <footer>
         <div class="footer-content">

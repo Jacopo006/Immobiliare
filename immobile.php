@@ -123,17 +123,25 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
                 </div>
                 <div class="immobile-actions">
                     <p class="price"><?php echo number_format($immobile['prezzo'], 0, ',', '.'); ?> €</p>
-                    <?php if(isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente'): ?>
-                        <?php if($in_preferiti): ?>
-                            <a href="remove_preferito.php?id=<?php echo $immobile['id']; ?>" class="btn-favorite active">
-                                <i class="fas fa-heart"></i> Nei preferiti
-                            </a>
-                        <?php else: ?>
-                            <a href="add_preferito.php?id=<?php echo $immobile['id']; ?>" class="btn-favorite">
-                                <i class="far fa-heart"></i> Aggiungi ai preferiti
-                            </a>
+                    <div class="action-buttons">
+                        <?php if(isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente'): ?>
+                            <?php if($in_preferiti): ?>
+                                <a href="remove_preferito.php?id=<?php echo $immobile['id']; ?>" class="btn-favorite active">
+                                    <i class="fas fa-heart"></i> Nei preferiti
+                                </a>
+                            <?php else: ?>
+                                <a href="add_preferito.php?id=<?php echo $immobile['id']; ?>" class="btn-favorite">
+                                    <i class="far fa-heart"></i> Aggiungi ai preferiti
+                                </a>
+                            <?php endif; ?>
+                            
+                            <?php if($immobile['stato'] == 'disponibile'): ?>
+                                <a href="acquista.php?id=<?php echo $immobile['id']; ?>" class="btn-purchase">
+                                    <i class="fas fa-shopping-cart"></i> Acquista
+                                </a>
+                            <?php endif; ?>
                         <?php endif; ?>
-                    <?php endif; ?>
+                    </div>
                 </div>
             </div>
 

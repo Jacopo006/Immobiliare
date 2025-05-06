@@ -186,25 +186,14 @@ while ($cat = $result_categorie->fetch_assoc()) {
                                     <td><?php echo htmlspecialchars($row['citta']); ?></td>
                                     <td><?php echo number_format($row['prezzo'], 0, ',', '.'); ?></td>
                                     <td>
-                                        <select onchange="cambiaStato(this, <?php echo $row['id']; ?>)">
-                                            <option value="disponibile" <?php if ($row['stato'] == 'disponibile') echo 'selected'; ?>>Disponibile</option>
-                                            <option value="venduto" <?php if ($row['stato'] == 'venduto') echo 'selected'; ?>>Venduto</option>
-                                            <option value="affittato" <?php if ($row['stato'] == 'affittato') echo 'selected'; ?>>Affittato</option>
-                                        </select>
+                                        <span class="status-badge status-<?php echo $row['stato']; ?>">
+                                            <?php echo ucfirst($row['stato']); ?>
+                                        </span>
                                     </td>
-
                                     <td><?php echo date('d/m/Y', strtotime($row['data_inserimento'])); ?></td>
                                     <td class="actions">
                                         <a href="immobile.php?id=<?php echo $row['id']; ?>" class="btn-action btn-view" title="Visualizza"><i class="fas fa-eye"></i></a>
                                         <a href="modifica_immobile.php?id=<?php echo $row['id']; ?>" class="btn-action btn-edit" title="Modifica"><i class="fas fa-edit"></i></a>
-                                        <a href="gestione_immobili.php?toggle_status=<?php echo $row['id']; ?>" class="btn-action btn-toggle" title="Cambia stato">
-                                            <?php if($row['stato'] == 'disponibile'): ?>
-                                                <i class="fas fa-toggle-on"></i>
-                                            <?php else: ?>
-                                                <i class="fas fa-toggle-off"></i>
-                                            <?php endif; ?>
-                                        </a>
-                                        <a href="gestione_immobili.php?delete=<?php echo $row['id']; ?>" class="btn-action btn-delete" title="Elimina" onclick="return confirm('Sei sicuro di voler eliminare questo immobile?')"><i class="fas fa-trash"></i></a>
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>

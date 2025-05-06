@@ -40,8 +40,53 @@ while ($cat = $result_categorie->fetch_assoc()) {
     $categorie[] = $cat;
 }
 
+// Gestione dell'eliminazione dell'immobile
+if (isset($_POST['action']) && $_POST['action'] == 'elimina') {
+    // Prima controlla se ci sono transazioni o preferiti legati a questo immobile
+    $check_transazioni = "SELECT COUNT(*) as num FROM transazioni WHERE id_immobile = $id_immobile";
+    $result_transazioni = $conn->query($check_transazioni);
+    $transazioni = $result_transazioni->fetch_assoc();
+    
+    $check_preferiti = "SELECT COUNT(*) as num FROM preferiti WHERE id_immobile = $id_immobile";
+    $result_preferiti = $conn->query($check_preferiti);
+    $preferiti = $result_preferiti->fetch_assoc();
+    
+    if ($transazioni['num'] > 0) {
+        $error = "Impossibile eliminare l'immobile perché esistono delle transazioni associate.";
+    } else {
+        // Elimina prima i preferiti associati
+        $delete_preferiti = "DELETE FROM preferiti WHERE id_immobile = $id_immobile";
+        $conn->query($delete_preferiti);
+        
+        // Poi elimina l'immobile
+        $delete_query = "DELETE FROM immobili WHERE id = $id_immobile AND agente_id = $id_agente";
+        if ($conn->query($delete_query) === TRUE) {
+            // Redirect alla dashboard con messaggio di successo
+            header('Location: dashboard_agente.php?msg=eliminato');
+            exit();
+        } else {
+            $error = "Errore durante l'eliminazione: " . $conn->error;
+        }
+    }
+}
+
+// Gestione del cambio stato dell'immobile
+if (isset($_POST['action']) && $_POST['action'] == 'cambio_stato') {
+    $nuovo_stato = $conn->real_escape_string($_POST['nuovo_stato']);
+    $update_stato_query = "UPDATE immobili SET stato = '$nuovo_stato' WHERE id = $id_immobile AND agente_id = $id_agente";
+    
+    if ($conn->query($update_stato_query) === TRUE) {
+        $msg = "Stato dell'immobile aggiornato con successo!";
+        // Aggiorna i dati dell'immobile nella variabile
+        $check_result = $conn->query($check_query);
+        $immobile = $check_result->fetch_assoc();
+    } else {
+        $error = "Errore durante l'aggiornamento dello stato: " . $conn->error;
+    }
+}
+
 // Gestione del form di modifica
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['action'])) {
     // Recupera i dati dal form
     $nome = $conn->real_escape_string($_POST['nome']);
     $categoria_id = intval($_POST['categoria_id']);
@@ -114,13 +159,110 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modifica Immobile - Area Agenti</title>
+    <title>Gestione Immobile - Area Agenti</title>
     <link rel="stylesheet" href="style_home-page.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="modifica.css">
+    <style>
+        /* Stili aggiuntivi per la gestione stato e eliminazione */
+        .card-actions {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-left: 4px solid #3498db;
+        }
+        .card-actions h3 {
+            margin-top: 0;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        .btn-warning {
+            background-color: #f39c12;
+            color: white;
+        }
+        .btn-warning:hover {
+            background-color: #d35400;
+        }
+        .state-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .state-form select {
+            flex: 1;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #e74c3c;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-disponibile {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .status-venduto {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .status-affittato {
+            background-color: #3498db;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <!-- Header con menu dinamico basato sul login -->
@@ -151,7 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Banner Principale -->
     <section id="banner" class="banner-small">
         <div class="banner-content">
-            <h1>Modifica Immobile</h1>
+            <h1>Gestione Immobile</h1>
             <p>Area riservata agli agenti immobiliari</p>
         </div>
     </section>
@@ -160,7 +302,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="container">
         <div class="breadcrumb">
             <a href="dashboard_agente.php"><i class="fas fa-home"></i> Dashboard</a> &gt; 
-            <span>Modifica Immobile</span>
+            <span>Gestione Immobile</span>
         </div>
         
         <?php if($msg): ?>
@@ -175,10 +317,82 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </div>
         <?php endif; ?>
 
+        <!-- Card per gestire lo stato e l'eliminazione -->
         <div class="card">
             <div class="card-header">
-                <h2><i class="fas fa-edit"></i> Modifica Immobile</h2>
+                <h2>
+                    <i class="fas fa-tasks"></i> Gestione Immobile: 
+                    <?php echo htmlspecialchars($immobile['nome']); ?>
+                    <span class="status-badge status-<?php echo $immobile['stato']; ?>">
+                        <?php 
+                        switch($immobile['stato']) {
+                            case 'disponibile':
+                                echo 'Disponibile';
+                                break;
+                            case 'venduto':
+                                echo 'Venduto';
+                                break;
+                            case 'affittato':
+                                echo 'Affittato';
+                                break;
+                        }
+                        ?>
+                    </span>
+                </h2>
                 <a href="dashboard_agente.php#miei-immobili" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Torna alla Lista</a>
+            </div>
+            
+            <div class="card-body">
+                <!-- Sezione cambio stato -->
+                <div class="card-actions">
+                    <h3><i class="fas fa-exchange-alt"></i> Cambia Stato dell'Immobile</h3>
+                    <p>Lo stato attuale dell'immobile è: <strong><?php echo ucfirst($immobile['stato']); ?></strong></p>
+                    
+                    <form action="modifica_immobile.php?id=<?php echo $id_immobile; ?>" method="POST" class="state-form">
+                        <input type="hidden" name="action" value="cambio_stato">
+                        <select name="nuovo_stato" class="form-control">
+                            <option value="disponibile" <?php if($immobile['stato'] == 'disponibile') echo 'selected'; ?>>Disponibile</option>
+                            <option value="venduto" <?php if($immobile['stato'] == 'venduto') echo 'selected'; ?>>Venduto</option>
+                            <option value="affittato" <?php if($immobile['stato'] == 'affittato') echo 'selected'; ?>>Affittato</option>
+                        </select>
+                        <button type="submit" class="btn btn-warning"><i class="fas fa-save"></i> Aggiorna Stato</button>
+                    </form>
+                </div>
+                
+                <!-- Sezione eliminazione -->
+                <div class="card-actions">
+                    <h3><i class="fas fa-trash-alt"></i> Elimina Immobile</h3>
+                    <p>Attenzione: questa operazione non può essere annullata. L'immobile verrà rimosso permanentemente dal database.</p>
+                    
+                    <div class="action-buttons">
+                        <button id="btnElimina" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Elimina Immobile</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal di conferma eliminazione -->
+        <div id="deleteModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3><i class="fas fa-exclamation-triangle"></i> Conferma eliminazione</h3>
+                <p>Sei sicuro di voler eliminare l'immobile "<?php echo htmlspecialchars($immobile['nome']); ?>"?</p>
+                <p>Questa operazione è irreversibile.</p>
+                
+                <div class="modal-buttons">
+                    <button id="btnAnnulla" class="btn btn-secondary"><i class="fas fa-times"></i> Annulla</button>
+                    <form action="modifica_immobile.php?id=<?php echo $id_immobile; ?>" method="POST">
+                        <input type="hidden" name="action" value="elimina">
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Conferma Eliminazione</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card per modificare i dettagli dell'immobile -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-edit"></i> Modifica Dettagli Immobile</h2>
             </div>
             
             <div class="card-body">
@@ -329,6 +543,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 reader.readAsDataURL(file);
             }
         });
+
+        // Gestione del modal per la conferma dell'eliminazione
+        const modal = document.getElementById("deleteModal");
+        const btnElimina = document.getElementById("btnElimina");
+        const btnAnnulla = document.getElementById("btnAnnulla");
+        const span = document.getElementsByClassName("close")[0];
+
+        // Apri il modal quando si clicca sul pulsante elimina
+        btnElimina.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // Chiudi il modal quando si clicca sulla X
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Chiudi il modal quando si clicca su Annulla
+        btnAnnulla.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        // Chiudi il modal quando si clicca al di fuori di esso
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
     </script>
 </body>
 </html>
