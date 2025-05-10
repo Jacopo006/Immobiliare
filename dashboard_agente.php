@@ -139,6 +139,7 @@ while ($cat = $result_categorie->fetch_assoc()) {
                 <li><a href="#nuovo-immobile"><i class="fas fa-plus-circle"></i> Aggiungi Immobile</a></li>
                 <li><a href="#statistiche"><i class="fas fa-chart-line"></i> Statistiche</a></li>
                 <li><a href="#contatti-ricevuti"><i class="fas fa-envelope"></i> Richieste Ricevute</a></li>
+                <li><a href="business_plan.php"><i class="fas fa-file-invoice-dollar"></i> Business Plan</a></li>
             </ul>
         </div>
 
@@ -421,6 +422,47 @@ while ($cat = $result_categorie->fetch_assoc()) {
                         <p>Non hai ancora ricevuto richieste di contatto per i tuoi immobili.</p>
                     </div>
                     <?php endif; ?>
+                </div>
+            </section>
+
+            <section id="business-plan" class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-file-invoice-dollar"></i> Business Plan</h2>
+                </div>
+                
+                <div class="card-body">
+                    <div class="business-plan-intro">
+                        <p>Crea e gestisci il tuo business plan immobiliare personalizzato. Definisci obiettivi, proiezioni e strategie per massimizzare le tue vendite.</p>
+                        <div class="business-plan-actions">
+                            <a href="business_plan.php" class="btn btn-primary"><i class="fas fa-chart-bar"></i> Accedi al Business Plan</a>
+                        </div>
+                    </div>
+                    
+                    <div class="business-plan-features">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <h3>Definisci Obiettivi</h3>
+                            <p>Imposta obiettivi di vendita e di guadagno a breve, medio e lungo termine.</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3>Analisi del Mercato</h3>
+                            <p>Monitora l'andamento del mercato immobiliare nella tua zona.</p>
+                        </div>
+                        
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <h3>Previsioni Finanziarie</h3>
+                            <p>Crea proiezioni finanziarie basate sui tuoi immobili e sul mercato.</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>
