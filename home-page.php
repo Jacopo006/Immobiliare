@@ -2,6 +2,32 @@
 session_start();
 include 'config.php'; // Includi il file di connessione
 
+// Verificare il tipo di utente e assegnarlo alla sessione se non è già definito
+if (isset($_SESSION['user_id']) && !isset($_SESSION['user_type'])) {
+    // Verifica se è un agente
+    $user_id = $_SESSION['user_id'];
+    $sql_check_agent = "SELECT id FROM agenti_immobiliari WHERE id = ?";
+    $stmt = $conn->prepare($sql_check_agent);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result_agent = $stmt->get_result();
+    
+    if ($result_agent->num_rows > 0) {
+        $_SESSION['user_type'] = 'agente';
+    } else {
+        // Verifica se è un utente normale
+        $sql_check_user = "SELECT id FROM utenti WHERE id = ?";
+        $stmt = $conn->prepare($sql_check_user);
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $result_user = $stmt->get_result();
+        
+        if ($result_user->num_rows > 0) {
+            $_SESSION['user_type'] = 'utente';
+        }
+    }
+}
+
 // Query per ottenere i primi 3 immobili in evidenza
 $sql_immobili = "SELECT id, nome, descrizione, prezzo, immagine FROM immobili WHERE stato = 'disponibile' LIMIT 3";
 $result_immobili = $conn->query($sql_immobili);
@@ -27,8 +53,12 @@ $result_agenti = $conn->query($sql_agenti);
     <!-- Header con menu dinamico basato sul login -->
 <header>
     <nav>
-    <!-- Icona casetta cliccabile verso login_agente.php -->
-        <a href="login_agente.php" style="text-decoration:none;">
+    <!-- Icona casetta cliccabile intelligente: porta a login_agente.php o profilo-agente.php -->
+        <?php 
+        // Link intelligente: se è un agente loggato, va al suo profilo, altrimenti alla pagina di login degli agenti
+        $agent_link = (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente') ? 'profilo-agente.php' : 'login_agente.php';
+        ?>
+        <a href="<?php echo $agent_link; ?>" style="text-decoration:none;">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#3498db" viewBox="0 0 24 24">
                 <path d="M3 13h18v8H3v-8zm2 2v4h2v-4H5zm4 0v4h2v-4H9zm4 0v4h2v-4h-2zm4 0v4h2v-4h-2zM3 3h18v8H3V3zm2 2v4h2V5H5zm4 0v4h2V5H9zm4 0v4h2V5h-2zm4 0v4h2V5h-2z"/>
             </svg>
@@ -43,8 +73,12 @@ $result_agenti = $conn->query($sql_agenti);
                 <li class="user-menu">
                     <a href="#"><i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name']); ?> <i class="fas fa-caret-down"></i></a>
                     <ul class="dropdown-menu">
-                        <li><a href="profile.php"><i class="fas fa-id-card"></i> Profilo</a></li>
-                        <?php if($_SESSION['user_type'] == 'utente'): ?>
+                        <?php 
+                        // Definisci il percorso del profilo in base al tipo di utente
+                        $profile_path = isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente' ? 'profilo-agente.php' : 'profilo-utente.php';
+                        ?>
+                        <li><a href="<?php echo $profile_path; ?>"><i class="fas fa-id-card"></i> Profilo</a></li>
+                        <?php if(isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'utente'): ?>
                             <li><a href="preferiti.php"><i class="fas fa-heart"></i> Preferiti</a></li>
                         <?php endif; ?>
                         <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
