@@ -196,7 +196,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="index.php">Home</a>
+                        <a class="nav-link" href="home-page.php">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="immobili.php">Immobili</a>

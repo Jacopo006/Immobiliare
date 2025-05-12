@@ -2,8 +2,13 @@
 session_start();
 include 'config.php';
 
+// Debug per vedere se le variabili di sessione sono impostate
+error_log("Dashboard - user_id: " . (isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'non impostato'));
+error_log("Dashboard - user_type: " . (isset($_SESSION['user_type']) ? $_SESSION['user_type'] : 'non impostato'));
+
 // Verifica che l'utente sia un agente immobiliare
-if (!isset($_SESSION['user_id']) || $_SESSION['user_type'] != 'agente') {
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION['user_type'] != 'agente') {
+    error_log("Accesso non autorizzato alla dashboard agente - reindirizzamento al login");
     header('Location: login_agente.php');
     exit();
 }
@@ -79,8 +84,10 @@ $result = $conn->query($sql);
 $sql_categorie = "SELECT id, nome FROM categorie";
 $result_categorie = $conn->query($sql_categorie);
 $categorie = [];
-while ($cat = $result_categorie->fetch_assoc()) {
-    $categorie[] = $cat;
+if ($result_categorie) {
+    while ($cat = $result_categorie->fetch_assoc()) {
+        $categorie[] = $cat;
+    }
 }
 ?>
 
@@ -114,8 +121,8 @@ while ($cat = $result_categorie->fetch_assoc()) {
                 <li class="user-menu">
                     <a href="#"><i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name']); ?> <i class="fas fa-caret-down"></i></a>
                     <ul class="dropdown-menu">
-                        <li><a href="profile.php"><i class="fas fa-id-card"></i> Profilo</a></li>
-                        <li><a href="gestione_immobili.php" class="active"><i class="fas fa-cogs"></i> Gestione Immobili</a></li>
+                        <li><a href="profilo-agente.php"><i class="fas fa-id-card"></i> Profilo</a></li>
+                        <li><a href="dashboard_agente.php" class="active"><i class="fas fa-cogs"></i> Gestione Immobili</a></li>
                         <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     </ul>
                 </li>
@@ -163,7 +170,7 @@ while ($cat = $result_categorie->fetch_assoc()) {
                 </div>
                 
                 <div class="card-body">
-                    <?php if ($result->num_rows > 0): ?>
+                    <?php if ($result && $result->num_rows > 0): ?>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -313,7 +320,17 @@ while ($cat = $result_categorie->fetch_assoc()) {
                                         FROM immobili 
                                         WHERE agente_id = $id_agente";
                         $stats_result = $conn->query($stats_query);
-                        $stats = $stats_result->fetch_assoc();
+                        if ($stats_result) {
+                            $stats = $stats_result->fetch_assoc();
+                        } else {
+                            $stats = array(
+                                'totale' => 0,
+                                'disponibili' => 0,
+                                'venduti' => 0,
+                                'affittati' => 0,
+                                'prezzo_medio' => 0
+                            );
+                        }
                         ?>
                         
                         <div class="stat-card">
@@ -399,18 +416,42 @@ while ($cat = $result_categorie->fetch_assoc()) {
                                 </tr>
                             </thead>
                             <tbody>
-                                <?php while($contatto = $contatti_result->fetch_assoc()): ?>
+                            <?php while($contatto = $contatti_result->fetch_assoc()): ?>
                                 <tr>
                                     <td><?php echo date('d/m/Y H:i', strtotime($contatto['data_invio'])); ?></td>
                                     <td><?php echo htmlspecialchars($contatto['nome']); ?></td>
                                     <td><?php echo htmlspecialchars($contatto['email']); ?></td>
                                     <td><?php echo htmlspecialchars($contatto['immobile_nome']); ?></td>
-                                    <td><?php echo substr(htmlspecialchars($contatto['messaggio']), 0, 50) . (strlen($contatto['messaggio']) > 50 ? '...' : ''); ?></td>
+                                    <td><?php echo nl2br(htmlspecialchars(substr($contatto['messaggio'], 0, 100))); ?>
+                                        <?php if(strlen($contatto['messaggio']) > 100): ?>
+                                            <a href="#" class="view-more" data-toggle="modal" data-target="#messageModal-<?php echo $contatto['id']; ?>">...leggi tutto</a>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="actions">
-                                        <a href="mailto:<?php echo $contatto['email']; ?>" class="btn-action btn-email" title="Rispondi"><i class="fas fa-reply"></i></a>
-                                        <a href="visualizza_contatto.php?id=<?php echo $contatto['id']; ?>" class="btn-action btn-view" title="Visualizza"><i class="fas fa-eye"></i></a>
+                                        <a href="mailto:<?php echo $contatto['email']; ?>" class="btn-action btn-primary" title="Rispondi"><i class="fas fa-reply"></i></a>
+                                        <a href="#" class="btn-action btn-view" title="Visualizza" data-toggle="modal" data-target="#messageModal-<?php echo $contatto['id']; ?>"><i class="fas fa-eye"></i></a>
                                     </td>
                                 </tr>
+                                <!-- Modal per visualizzare il messaggio completo -->
+                                <div class="modal" id="messageModal-<?php echo $contatto['id']; ?>">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h3>Messaggio da <?php echo htmlspecialchars($contatto['nome']); ?></h3>
+                                            <span class="close">&times;</span>
+                                        </div>
+                                        <div class="modal-body">
+                                            <p><strong>Data:</strong> <?php echo date('d/m/Y H:i', strtotime($contatto['data_invio'])); ?></p>
+                                            <p><strong>Email:</strong> <?php echo htmlspecialchars($contatto['email']); ?></p>
+                                            <p><strong>Immobile:</strong> <?php echo htmlspecialchars($contatto['immobile_nome']); ?></p>
+                                            <p><strong>Messaggio:</strong></p>
+                                            <div class="message-content"><?php echo nl2br(htmlspecialchars($contatto['messaggio'])); ?></div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <a href="mailto:<?php echo $contatto['email']; ?>" class="btn btn-primary"><i class="fas fa-reply"></i> Rispondi via Email</a>
+                                            <button class="btn btn-secondary close-modal"><i class="fas fa-times"></i> Chiudi</button>
+                                        </div>
+                                    </div>
+                                </div>
                                 <?php endwhile; ?>
                             </tbody>
                         </table>
@@ -418,51 +459,10 @@ while ($cat = $result_categorie->fetch_assoc()) {
                     <?php else: ?>
                     <div class="empty-state">
                         <i class="fas fa-envelope-open"></i>
-                        <h3>Nessuna richiesta ricevuta</h3>
+                        <h3>Nessuna richiesta di contatto</h3>
                         <p>Non hai ancora ricevuto richieste di contatto per i tuoi immobili.</p>
                     </div>
                     <?php endif; ?>
-                </div>
-            </section>
-
-            <section id="business-plan" class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-file-invoice-dollar"></i> Business Plan</h2>
-                </div>
-                
-                <div class="card-body">
-                    <div class="business-plan-intro">
-                        <p>Crea e gestisci il tuo business plan immobiliare personalizzato. Definisci obiettivi, proiezioni e strategie per massimizzare le tue vendite.</p>
-                        <div class="business-plan-actions">
-                            <a href="business_plan.php" class="btn btn-primary"><i class="fas fa-chart-bar"></i> Accedi al Business Plan</a>
-                        </div>
-                    </div>
-                    
-                    <div class="business-plan-features">
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="fas fa-bullseye"></i>
-                            </div>
-                            <h3>Definisci Obiettivi</h3>
-                            <p>Imposta obiettivi di vendita e di guadagno a breve, medio e lungo termine.</p>
-                        </div>
-                        
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="fas fa-chart-line"></i>
-                            </div>
-                            <h3>Analisi del Mercato</h3>
-                            <p>Monitora l'andamento del mercato immobiliare nella tua zona.</p>
-                        </div>
-                        
-                        <div class="feature-card">
-                            <div class="feature-icon">
-                                <i class="fas fa-calculator"></i>
-                            </div>
-                            <h3>Previsioni Finanziarie</h3>
-                            <p>Crea proiezioni finanziarie basate sui tuoi immobili e sul mercato.</p>
-                        </div>
-                    </div>
                 </div>
             </section>
         </div>
@@ -471,67 +471,92 @@ while ($cat = $result_categorie->fetch_assoc()) {
     <!-- Footer -->
     <footer>
         <div class="footer-content">
-            <div class="footer-column">
-                <h3>Chi Siamo</h3>
-                <p>Immobiliare è la tua agenzia di fiducia con oltre 20 anni di esperienza nel settore immobiliare in tutta Italia.</p>
-            </div>
-            <div class="footer-column">
-                <h3>Link Utili</h3>
-                <ul>
-                    <li><a href="immobili.php">Ricerca Immobili</a></li>
-                    <li><a href="servizi.php">I Nostri Servizi</a></li>
-                    <li><a href="privacy.php">Privacy Policy</a></li>
-                    <li><a href="contatti.php">Contattaci</a></li>
-                </ul>
-            </div>
-            <div class="footer-column">
-                <h3>Contatti</h3>
-                <p><i class="fas fa-map-marker-alt"></i> Via Roma 123, Milano</p>
-                <p><i class="fas fa-phone"></i> +39 02 1234567</p>
-                <p><i class="fas fa-envelope"></i> info@immobiliare.it</p>
-                <div class="social-media">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <div class="footer-section about">
+                <h3>Immobiliare XYZ</h3>
+                <p>La tua agenzia immobiliare di fiducia. Trova la casa dei tuoi sogni con noi!</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
                     <a href="#"><i class="fab fa-instagram"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
                 </div>
             </div>
+            <div class="footer-section links">
+                <h3>Link Utili</h3>
+                <ul>
+                    <li><a href="home-page.php">Home</a></li>
+                    <li><a href="immobili.php">Immobili</a></li>
+                    <li><a href="contatti.php">Contatti</a></li>
+                    <li><a href="privacy-policy.php">Privacy Policy</a></li>
+                    <li><a href="faq.php">FAQ</a></li>
+                </ul>
+            </div>
+            <div class="footer-section contact">
+                <h3>Contattaci</h3>
+                <p><i class="fas fa-map-marker-alt"></i> Via Roma 123, Milano</p>
+                <p><i class="fas fa-phone"></i> +39 02 1234567</p>
+                <p><i class="fas fa-envelope"></i> info@immobiliarexyz.it</p>
+            </div>
         </div>
-        <div class="copyright">
-            <p>&copy; 2025 Immobiliare. Tutti i diritti riservati.</p>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Immobiliare XYZ. Tutti i diritti riservati.</p>
         </div>
     </footer>
 
+    <!-- JavaScript per la gestione dei modali e altre funzionalità -->
     <script>
-        // Funzione per attivare la scheda corretta in base all'hash URL
-        function activateTab() {
-            const hash = window.location.hash || '#miei-immobili';
-            document.querySelectorAll('.sidebar a').forEach(link => {
-                link.classList.remove('active');
-                if(link.getAttribute('href') === hash) {
-                    link.classList.add('active');
+        // Gestione dei modali
+        document.addEventListener('DOMContentLoaded', function() {
+            // Ottieni tutti i bottoni di apertura modale
+            var modalButtons = document.querySelectorAll('[data-toggle="modal"]');
+            
+            // Aggiungi l'evento click a ciascun bottone
+            modalButtons.forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    var targetModal = document.querySelector(this.getAttribute('data-target'));
+                    if (targetModal) {
+                        targetModal.style.display = 'block';
+                    }
+                });
+            });
+            
+            // Ottieni tutti i bottoni di chiusura modale
+            var closeButtons = document.querySelectorAll('.close, .close-modal');
+            
+            // Aggiungi l'evento click a ciascun bottone di chiusura
+            closeButtons.forEach(function(button) {
+                button.addEventListener('click', function() {
+                    var modal = this.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+            
+            // Chiudi il modale quando si fa clic all'esterno
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
                 }
             });
             
-            // Nascondi tutte le sezioni tranne quella attiva
-            document.querySelectorAll('.card').forEach(section => {
-                section.style.display = 'none';
-            });
-            
-            // Mostra la sezione attiva
-            const activeSection = document.querySelector(hash);
-            if(activeSection) {
-                activeSection.style.display = 'block';
+            // Gestione del menu mobile
+            var userMenu = document.querySelector('.user-menu');
+            if (userMenu) {
+                userMenu.addEventListener('click', function(e) {
+                    this.classList.toggle('active');
+                    e.stopPropagation();
+                });
             }
-        }
-
-        // Esegui all'avvio e al cambio di hash
-        window.addEventListener('DOMContentLoaded', activateTab);
-        window.addEventListener('hashchange', activateTab);
+            
+            // Chiudi il menu quando si fa clic all'esterno
+            document.addEventListener('click', function() {
+                if (userMenu) {
+                    userMenu.classList.remove('active');
+                }
+            });
+        });
     </script>
 </body>
 </html>
-
-<?php
-$conn->close(); // Chiudi la connessione
-?>

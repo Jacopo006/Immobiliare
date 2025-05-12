@@ -1,19 +1,48 @@
 <?php
 session_start();
-include 'config.php'; // Includi il file di connessione
+include 'config.php';
 
-// DEBUG - Rimuovi in produzione
-// echo "<pre>";
-// print_r($_SESSION);
-// echo "</pre>";
+// Controllo se l'utente è già loggato come agente
+if(isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente') {
+    header("Location: dashboard_agente.php");
+    exit;
+}
 
-// Query per ottenere i primi 3 immobili in evidenza
-$sql_immobili = "SELECT id, nome, descrizione, prezzo, immagine FROM immobili WHERE stato = 'disponibile' LIMIT 3";
-$result_immobili = $conn->query($sql_immobili);
+$error = '';
 
-// Query per ottenere gli agenti immobiliari
-$sql_agenti = "SELECT id, nome, cognome, email, telefono FROM agenti_immobiliari";
-$result_agenti = $conn->query($sql_agenti);
+// Processo il form di login quando viene inviato
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = $conn->real_escape_string($_POST['email']);
+    $password = $_POST['password'];
+    
+    // Controllo se l'email esiste
+    $sql = "SELECT id, nome, cognome, email, Password FROM agenti_immobiliari WHERE email = '$email'";
+    $result = $conn->query($sql);
+    
+    if ($result->num_rows > 0) {
+        $user = $result->fetch_assoc();
+        
+        // Verifica la password con confronto diretto invece di password_verify
+        if ($password === $user['Password']) {
+            // Password è corretta, inizia la sessione
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['nome'] . ' ' . $user['cognome'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['user_type'] = 'agente';
+            
+            // Debug: assicuriamoci che la sessione sia impostata correttamente
+            error_log("Login agente riuscito: ID=" . $_SESSION['user_id'] . ", Tipo=" . $_SESSION['user_type']);
+            
+            // Redirect alla dashboard agente
+            header("Location: dashboard_agente.php");
+            exit;
+        } else {
+            $error = "Password non corretta";
+        }
+    } else {
+        $error = "Email non trovata";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -21,123 +50,60 @@ $result_agenti = $conn->query($sql_agenti);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Immobiliare - Trova la casa dei tuoi sogni</title>
+    <title>Accedi come Agente - Immobiliare</title>
     <link rel="stylesheet" href="style_home-page.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="login_agente.css">
 </head>
 <body>
-    <!-- Header con menu dinamico basato sul login -->
-<header>
-    <nav>
-    <!-- Icona casetta cliccabile intelligente: porta a login_agente.php o profilo-agente.php -->
-        <?php 
-        // Link intelligente per l'icona casetta: se è un agente loggato, va al suo profilo, altrimenti alla pagina di login degli agenti
-        $agent_home_link = (isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente') ? 'profilo-agente.php' : 'login_agente.php';
-        ?>
-        <a href="<?php echo $agent_home_link; ?>" style="text-decoration:none;">
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#3498db" viewBox="0 0 24 24">
-                <path d="M3 13h18v8H3v-8zm2 2v4h2v-4H5zm4 0v4h2v-4H9zm4 0v4h2v-4h-2zm4 0v4h2v-4h-2zM3 3h18v8H3V3zm2 2v4h2V5H5zm4 0v4h2V5H9zm4 0v4h2V5h-2zm4 0v4h2V5h-2z"/>
-            </svg>
-        </a>
-
-        <ul>
-            <li><a href="home-page.php"><i class="fas fa-home"></i> Home</a></li>
-            <li><a href="immobili.php"><i class="fas fa-building"></i> Immobili</a></li>
-            <li><a href="contatti.php"><i class="fas fa-envelope"></i> Contatti</a></li>
-            <li><a href="faq.php"><i class="fas fa-question-circle"></i> FAQ</a></li>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <li class="user-menu">
-                    <a href="#"><i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Utente'); ?> <i class="fas fa-caret-down"></i></a>
-                    <ul class="dropdown-menu">
-                        <?php 
-                        // Definisci il percorso del profilo in base al tipo di utente
-                        if(isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente') {
-                            $profile_path = 'profilo-agente.php';
-                        } else {
-                            $profile_path = 'profilo-utente.php';
-                        }
-                        ?>
-                        <li><a href="<?php echo $profile_path; ?>"><i class="fas fa-id-card"></i> Profilo</a></li>
-                        <?php if(isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'utente'): ?>
-                            <li><a href="preferiti.php"><i class="fas fa-heart"></i> Preferiti</a></li>
-                        <?php endif; ?>
-                        <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                    </ul>
-                </li>
-            <?php else: ?>
+                <path d="M12 3l8 7h-3v7h-4v-5h-2v5H7v-7H4l8-7z"/>
+            </svg> 
+            </div>
+            <ul>
+                <li><a href="home-page.php"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="immobili.php"><i class="fas fa-building"></i> Immobili</a></li>
+                <li><a href="contatti.php"><i class="fas fa-envelope"></i> Contatti</a></li>
+                <li><a href="faq.php"><i class="fas fa-question-circle"></i> FAQ</a></li>
                 <li><a href="login_utente.php"><i class="fas fa-sign-in-alt"></i> Accedi</a></li>
                 <li><a href="registrazione_utente.php"><i class="fas fa-user-plus"></i> Registrati</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
-</header>
-    <!-- Banner -->
-    <section id="banner">
-        <div class="banner-content">
-            <h1>
-                <?php 
-                    if(isset($_SESSION['user_id'])) {
-                        echo "Benvenuto " . htmlspecialchars($_SESSION['user_name'] ?? 'Utente');
-                    } else {
-                        echo "Benvenuto Ospite";
-                    }
-                ?>
-            </h1>
-            <p>Le migliori opportunità immobiliari in tutta Italia selezionate per te</p>
-            <a href="#immobili" class="cta-button">Scopri le Nostre Offerte</a>
-        </div>
-    </section>
-    <!-- Immobili in Evidenza -->
-    <section id="immobili">
-        <h2>Immobili in Evidenza</h2>
+            </ul>
+        </nav>
+    </header>
 
-        <div class="immobili-container">
-            <?php
-            if ($result_immobili->num_rows > 0) {
-                while($row = $result_immobili->fetch_assoc()) {
-                    echo "<div class='immobile'>";
-                    echo "<img src='" . $row['immagine'] . "' alt='" . $row['nome'] . "'>";
-                    echo "<div class='immobile-info'>";
-                    echo "<h3>" . $row['nome'] . "</h3>";
-                    echo "<p>" . substr($row['descrizione'], 0, 100) . "...</p>";
-                    echo "<p class='prezzo'>" . number_format($row['prezzo'], 0, ',', '.') . " €</p>";
-                    echo "<a href='immobile.php?id=" . $row['id'] . "' class='btn'>Vedi Dettagli</a>";
-                    echo "</div>";
-                    echo "</div>";
-                }
-            } else {
-                echo "<p>Nessun immobile disponibile al momento.</p>";
-            }
-            ?>
-        </div>
-    </section>
+    <!-- Contenuto principale -->
+    <div class="login-container">
+        <h2>Accedi come Agente Immobiliare</h2>
+        
+        <?php if(!empty($error)): ?>
+            <div class="error-message">
+                <?php echo $error; ?>
+            </div>
+        <?php endif; ?>
+        
+        <form action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>" method="post">
+            <div class="form-group">
+                <label for="email"><i class="fas fa-envelope"></i> Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password"><i class="fas fa-lock"></i> Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="submit-btn">Accedi</button>
+        </form>
+        
+    </div>
 
-    <!-- Agenti Immobiliari -->
-    <section id="agenti">
-        <h2>I Nostri Esperti Immobiliari</h2>
-        <div class="agenti-container">
-            <?php
-            if ($result_agenti->num_rows > 0) {
-                while($row = $result_agenti->fetch_assoc()) {
-                    echo "<div class='agente'>";
-                    echo "<img src='img/agenti/avatar-" . $row['id'] . ".jpg' alt='" . $row['nome'] . " " . $row['cognome'] . "'>";
-                    echo "<h3>" . $row['nome'] . " " . $row['cognome'] . "</h3>";
-                    echo "<p><i class='fas fa-envelope'></i> " . $row['email'] . "</p>";
-                    if($row['telefono']) {
-                        echo "<p><i class='fas fa-phone'></i> " . $row['telefono'] . "</p>";
-                    }
-                    echo "<a href='agente.php?id=" . $row['id'] . "' class='btn'>Contatta</a>";
-                    echo "</div>";
-                }
-            } else {
-                echo "<p>Nessun agente disponibile al momento.</p>";
-            }
-            ?>
-        </div>
-    </section>
     <!-- Footer -->
     <footer>
         <div class="footer-content">
@@ -171,7 +137,6 @@ $result_agenti = $conn->query($sql_agenti);
             <p>&copy; 2025 Immobiliare. Tutti i diritti riservati.</p>
         </div>
     </footer>
-
 </body>
 </html>
 
