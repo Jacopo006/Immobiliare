@@ -1,10 +1,5 @@
 <?php
 session_start();
-// Verifica se l'agente è loggato
-if (!isset($_SESSION['agent_id'])) {
-    header("Location: login-agente.php");
-    exit();
-}
 
 // Connessione al database
 $servername = "localhost";

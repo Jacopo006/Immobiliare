@@ -7,7 +7,6 @@ if (isset($_POST['id']) && isset($_POST['stato'])) {
     $stato = $_POST['stato'];
     $id_agente = $_SESSION['user_id'];
 
-    // Verifica che l'immobile appartenga all'agente
     $stmt = $conn->prepare("SELECT id FROM immobili WHERE id = ? AND agente_id = ?");
     $stmt->bind_param('ii', $id, $id_agente);
     $stmt->execute();
