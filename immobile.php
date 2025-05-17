@@ -134,12 +134,12 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
                                     <i class="far fa-heart"></i> Aggiungi ai preferiti
                                 </a>
                             <?php endif; ?>
-                            
-                            <?php if($immobile['stato'] == 'disponibile'): ?>
-                                <a href="acquista.php?id=<?php echo $immobile['id']; ?>" class="btn-purchase">
-                                    <i class="fas fa-shopping-cart"></i> Acquista
-                                </a>
-                            <?php endif; ?>
+                        <?php endif; ?>
+                        
+                        <?php if($immobile['stato'] == 'disponibile'): ?>
+                            <a href="<?php echo isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente' ? 'acquista.php?id=' . $immobile['id'] : 'login_utente.php?redirect=acquista.php?id=' . $immobile['id']; ?>" class="btn-purchase">
+                                <i class="fas fa-shopping-cart"></i> Acquista
+                            </a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -321,12 +321,12 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
                                             <i class="far fa-heart"></i> Aggiungi ai preferiti
                                         </a>
                                     <?php endif; ?>
-                                    
-                                    <?php if($row['stato'] == 'disponibile'): ?>
-                                        <a href="acquista.php?id=<?php echo $row['id']; ?>" class="btn-purchase">
-                                            <i class="fas fa-shopping-cart"></i> Acquista
-                                        </a>
-                                    <?php endif; ?>
+                                <?php endif; ?>
+                                
+                                <?php if($row['stato'] == 'disponibile'): ?>
+                                    <a href="<?php echo isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente' ? 'acquista.php?id=' . $row['id'] : 'login_utente.php?redirect=acquista.php?id=' . $row['id']; ?>" class="btn-purchase">
+                                        <i class="fas fa-shopping-cart"></i> Acquista
+                                    </a>
                                 <?php endif; ?>
                             </div>
                         </div>

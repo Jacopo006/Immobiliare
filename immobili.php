@@ -1,12 +1,6 @@
 <?php
 session_start();
 
-// Controlla se l'utente è loggato
-if (!isset($_SESSION['user_id'])) {
-    // Se l'utente non è loggato, reindirizzalo alla pagina di login
-    header('Location: login_utente.php');
-    exit();
-}
 
 // Procedi con l'inclusione del file di configurazione e il resto della logica
 include 'config.php'; // Includi il file di connessione

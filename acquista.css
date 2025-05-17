@@ -1,0 +1,376 @@
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .breadcrumb {
+            background-color: #f8f9fa;
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+        .breadcrumb a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+        .breadcrumb span {
+            color: #6c757d;
+        }
+        
+        .purchase-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+        
+        .immobile-summary {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-right: 20px;
+        }
+        
+        .purchase-form {
+            flex: 2;
+            min-width: 500px;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .immobile-summary h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        .immobile-info {
+            margin-bottom: 15px;
+        }
+        
+        .immobile-info strong {
+            display: inline-block;
+            min-width: 120px;
+            color: #6c757d;
+        }
+        
+        .price-tag {
+            font-size: 24px;
+            color: #28a745;
+            font-weight: 700;
+            margin: 15px 0;
+        }
+        
+        .acconto-tag {
+            font-size: 18px;
+            color: #3498db;
+            font-weight: 600;
+            margin: 10px 0 20px;
+            padding: 10px;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 5px;
+        }
+        
+        .purchase-form h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .payment-methods {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .payment-method {
+            flex: 1;
+            min-width: 120px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-method:hover {
+            border-color: #3498db;
+        }
+        
+        .payment-method.selected {
+            border-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .payment-method i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #3498db;
+        }
+        
+        .payment-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .payment-option {
+            flex: 1;
+            min-width: 150px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .payment-option:hover {
+            border-color: #3498db;
+        }
+        
+        .payment-option.selected {
+            border-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .payment-option i {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: #3498db;
+        }
+        
+        .installment-options {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .installment-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .installment-option:hover {
+            border-color: #3498db;
+        }
+        
+        .installment-option.selected {
+            border-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .installment-option input {
+            margin-right: 10px;
+        }
+        
+        .installment-details {
+            flex: 1;
+        }
+        
+        .installment-duration {
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .installment-amount {
+            font-weight: 700;
+            color: #28a745;
+        }
+        
+        .terms-check {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        
+        .terms-check input {
+            margin-top: 5px;
+            margin-right: 10px;
+        }
+        
+        .btn-submit {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        .btn-submit:hover {
+            background-color: #218838;
+        }
+        
+        .btn-cancel {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+            display: block;
+            text-decoration: none;
+            margin-top: 10px;
+        }
+        
+        .btn-cancel:hover {
+            background-color: #c82333;
+        }
+
+        /* Stripe Elements styling */
+        .StripeElement {
+            box-sizing: border-box;
+            height: 40px;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            background-color: white;
+            box-shadow: 0 1px 3px 0 #e6ebf1;
+            transition: box-shadow 150ms ease;
+        }
+
+        .StripeElement--focus {
+            box-shadow: 0 1px 3px 0 #cfd7df;
+        }
+
+        .StripeElement--invalid {
+            border-color: #fa755a;
+        }
+
+        .StripeElement--webkit-autofill {
+            background-color: #fefde5 !important;
+        }
+
+        #stripe-payment-form {
+            display: none;
+        }
+
+        #payment-request-button {
+            margin-bottom: 20px;
+        }
+
+        .payment-error {
+            color: #dc3545;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .payment-success {
+            color: #28a745;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .payment-processing {
+            color: #3498db;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 992px) {
+            .purchase-container {
+                flex-direction: column;
+            }
+            
+            .immobile-summary,
+            .purchase-form {
+                margin-right: 0;
+                margin-bottom: 20px;
+                min-width: auto;
+            }
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        .payment-details {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .payment-summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .payment-summary h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #dee2e6;
+        }
+        
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: 700;
+        }
+        
+        #payment-options-container {
+            margin-bottom: 20px;
+        }

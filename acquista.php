@@ -27,22 +27,19 @@ $sql = "SELECT i.*, c.nome AS categoria, a.nome AS agente_nome, a.cognome AS age
         JOIN categorie c ON i.categoria_id = c.id
         LEFT JOIN agenti_immobiliari a ON i.agente_id = a.id
         WHERE i.id = ? AND i.stato = 'disponibile'";
-
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $id_immobile);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Se l'immobile non esiste o non è disponibile
 if ($result->num_rows == 0) {
     $_SESSION['error_message'] = "L'immobile selezionato non è disponibile per l'acquisto.";
     header('Location: immobili.php');
     exit();
 }
-
 $immobile = $result->fetch_assoc();
 
-// Ottieni i dati dell'utente
+// Ottieni dati utente
 $sql_utente = "SELECT * FROM utenti WHERE id = ?";
 $stmt_utente = $conn->prepare($sql_utente);
 $stmt_utente->bind_param("i", $id_utente);
@@ -50,30 +47,110 @@ $stmt_utente->execute();
 $result_utente = $stmt_utente->get_result();
 $utente = $result_utente->fetch_assoc();
 
-// Mappa delle categorie per la visualizzazione
-$categorie_map = [
-    'Appartamenti' => 'Appartamento',
-    'Ville' => 'Villa',
-    'Monolocali' => 'Monolocale',
-    'appartamento' => 'Appartamento',
-    'villa' => 'Villa',
-    'attico' => 'Attico',
-    'casa_indipendente' => 'Casa Indipendente',
-    'terreno' => 'Terreno',
-    'ufficio' => 'Ufficio',
-    'negozio' => 'Negozio'
+// Funzione per calcolare rata mensile
+function calcolaRata($importoTotale, $tassoMensile, $numRate) {
+    return round($importoTotale * $tassoMensile * pow(1 + $tassoMensile, $numRate) / (pow(1 + $tassoMensile, $numRate) - 1), 2);
+}
+
+$tassoInteresse = 5;
+$tassoMensile = $tassoInteresse / 100 / 12;
+$opzioniRate = [
+    12 => calcolaRata($immobile['prezzo'], $tassoMensile, 12),
+    24 => calcolaRata($immobile['prezzo'], $tassoMensile, 24),
+    36 => calcolaRata($immobile['prezzo'], $tassoMensile, 36),
+    48 => calcolaRata($immobile['prezzo'], $tassoMensile, 48),
 ];
 
-// Formatta la categoria per la visualizzazione
-$categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_map[$immobile['categoria']] : $immobile['categoria'];
-
-// Formatta il prezzo per Stripe (in centesimi)
-$stripe_amount = $immobile['prezzo'] * 100;
-// Calcola l'importo dell'acconto (10% del prezzo totale)
+// Calcola acconto (10%)
 $acconto_percentage = 10;
 $acconto_amount = round(($immobile['prezzo'] * $acconto_percentage) / 100);
-$acconto_amount_cents = $acconto_amount * 100;
+
+// Gestione form POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $response = ['success' => false, 'message' => ''];
+    $required_fields = ['telefono', 'indirizzo', 'tipo_acquisto', 'modalita_pagamento', 'metodo_pagamento'];
+    $valid = true;
+
+    foreach ($required_fields as $field) {
+        if (empty($_POST[$field])) {
+            $valid = false;
+            $response['message'] = "Tutti i campi obbligatori devono essere compilati.";
+            break;
+        }
+    }
+
+    if ($valid && $_POST['modalita_pagamento'] === 'rate' && empty($_POST['piano_rate'])) {
+        $valid = false;
+        $response['message'] = "Seleziona un piano di pagamento rateizzato.";
+    }
+
+    if ($valid && (!isset($_POST['terms']) || $_POST['terms'] !== 'on')) {
+        $valid = false;
+        $response['message'] = "Devi accettare i termini e le condizioni.";
+    }
+
+    if ($valid) {
+        // Recupera dati dal form
+        $tipo_acquisto = $_POST['tipo_acquisto'];
+        $modalita_pagamento = $_POST['modalita_pagamento'];
+        $metodo_pagamento = $_POST['metodo_pagamento'];
+        $piano_rate = isset($_POST['piano_rate']) ? (int)$_POST['piano_rate'] : null;
+        $note = isset($_POST['note']) ? $_POST['note'] : '';
+
+        // Calcola importo totale
+        $importo_totale = $immobile['prezzo'];
+        if ($modalita_pagamento === 'rate' && $piano_rate) {
+            $importo_totale = $opzioniRate[$piano_rate] * $piano_rate;
+        }
+
+        $stato_pagamento = ($metodo_pagamento === 'carta') ? 'pagato' : 'in attesa';
+
+        // Query inserimento acquisto
+        $sql_acquisto = "INSERT INTO acquisti 
+            (id_immobile, id_utente, tipo_acquisto, modalita_pagamento, metodo_pagamento, 
+            piano_rate, importo_totale, acconto, note, data_acquisto, stato_pagamento) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)";
+
+        $stmt_acquisto = $conn->prepare($sql_acquisto);
+
+        // Se piano_rate è NULL, passalo comunque
+        $stmt_acquisto->bind_param(
+            "iissisdsss",
+            $id_immobile,
+            $id_utente,
+            $tipo_acquisto,
+            $modalita_pagamento,
+            $metodo_pagamento,
+            $piano_rate,
+            $importo_totale,
+            $acconto_amount,
+            $note,
+            $stato_pagamento
+        );
+
+        if ($stmt_acquisto->execute()) {
+            // Aggiorna stato immobile
+            $sql_update = "UPDATE immobili SET stato = 'venduto' WHERE id = ?";
+            $stmt_update = $conn->prepare($sql_update);
+            $stmt_update->bind_param("i", $id_immobile);
+            $stmt_update->execute();
+
+            $_SESSION['success_message'] = "Acquisto completato con successo!";
+            header('Location: miei_acquisti.php?success=true');
+            exit();
+        } else {
+            $_SESSION['error_message'] = "Errore durante l'elaborazione dell'acquisto.";
+            header("Location: acquista.php?id=$id_immobile");
+            exit();
+        }
+    } else {
+        $_SESSION['error_message'] = $response['message'];
+        header("Location: acquista.php?id=$id_immobile");
+        exit();
+    }
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="it">
@@ -86,269 +163,9 @@ $acconto_amount_cents = $acconto_amount * 100;
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="acquista.css">
     <!-- Stripe JS -->
     <script src="https://js.stripe.com/v3/"></script>
-    <style>
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .breadcrumb {
-            background-color: #f8f9fa;
-            padding: 15px 0;
-            margin-bottom: 30px;
-        }
-        .breadcrumb a {
-            color: #3498db;
-            text-decoration: none;
-        }
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-        .breadcrumb span {
-            color: #6c757d;
-        }
-        
-        .purchase-container {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 50px;
-        }
-        
-        .immobile-summary {
-            flex: 1;
-            min-width: 300px;
-            padding: 20px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            margin-right: 20px;
-        }
-        
-        .purchase-form {
-            flex: 2;
-            min-width: 500px;
-            padding: 30px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
-        
-        .immobile-summary h2 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 10px;
-        }
-        
-        .immobile-info {
-            margin-bottom: 15px;
-        }
-        
-        .immobile-info strong {
-            display: inline-block;
-            min-width: 120px;
-            color: #6c757d;
-        }
-        
-        .price-tag {
-            font-size: 24px;
-            color: #28a745;
-            font-weight: 700;
-            margin: 15px 0;
-        }
-        
-        .acconto-tag {
-            font-size: 18px;
-            color: #3498db;
-            font-weight: 600;
-            margin: 10px 0 20px;
-            padding: 10px;
-            background-color: rgba(52, 152, 219, 0.1);
-            border-radius: 5px;
-        }
-        
-        .purchase-form h2 {
-            margin-top: 0;
-            color: #333;
-            border-bottom: 1px solid #dee2e6;
-            padding-bottom: 10px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #495057;
-        }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            font-size: 16px;
-        }
-        
-        .payment-methods {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .payment-method {
-            flex: 1;
-            min-width: 120px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .payment-method:hover {
-            border-color: #3498db;
-        }
-        
-        .payment-method.selected {
-            border-color: #3498db;
-            background-color: rgba(52, 152, 219, 0.1);
-        }
-        
-        .payment-method i {
-            font-size: 24px;
-            margin-bottom: 8px;
-            color: #3498db;
-        }
-        
-        .terms-check {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 20px;
-        }
-        
-        .terms-check input {
-            margin-top: 5px;
-            margin-right: 10px;
-        }
-        
-        .btn-submit {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            width: 100%;
-        }
-        
-        .btn-submit:hover {
-            background-color: #218838;
-        }
-        
-        .btn-cancel {
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            text-align: center;
-            display: block;
-            text-decoration: none;
-            margin-top: 10px;
-        }
-        
-        .btn-cancel:hover {
-            background-color: #c82333;
-        }
-
-        /* Stripe Elements styling */
-        .StripeElement {
-            box-sizing: border-box;
-            height: 40px;
-            padding: 10px 12px;
-            border: 1px solid #ced4da;
-            border-radius: 4px;
-            background-color: white;
-            box-shadow: 0 1px 3px 0 #e6ebf1;
-            transition: box-shadow 150ms ease;
-        }
-
-        .StripeElement--focus {
-            box-shadow: 0 1px 3px 0 #cfd7df;
-        }
-
-        .StripeElement--invalid {
-            border-color: #fa755a;
-        }
-
-        .StripeElement--webkit-autofill {
-            background-color: #fefde5 !important;
-        }
-
-        #stripe-payment-form {
-            display: none;
-        }
-
-        #payment-request-button {
-            margin-bottom: 20px;
-        }
-
-        .payment-error {
-            color: #dc3545;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        .payment-success {
-            color: #28a745;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        .payment-processing {
-            color: #3498db;
-            margin-top: 10px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-
-        @media (max-width: 992px) {
-            .purchase-container {
-                flex-direction: column;
-            }
-            
-            .immobile-summary,
-            .purchase-form {
-                margin-right: 0;
-                margin-bottom: 20px;
-                min-width: auto;
-            }
-        }
-
-        .note {
-            margin-top: 15px;
-            font-size: 14px;
-            color: #6c757d;
-        }
-    </style>
 </head>
 <body>
     <!-- Header con menu dinamico basato sul login -->
@@ -398,6 +215,15 @@ $acconto_amount_cents = $acconto_amount * 100;
     <div class="container">
         <h1>Conferma Acquisto</h1>
         
+        <?php if(isset($_SESSION['error_message'])): ?>
+            <div class="alert alert-danger">
+                <?php 
+                    echo $_SESSION['error_message']; 
+                    unset($_SESSION['error_message']);
+                ?>
+            </div>
+        <?php endif; ?>
+        
         <div class="purchase-container">
             <div class="immobile-summary">
                 <h2>Dettagli Immobile</h2>
@@ -435,165 +261,231 @@ $acconto_amount_cents = $acconto_amount * 100;
             </div>
             
             <div class="purchase-form">
-    <h2>Dati per l'Acquisto</h2>
-    <form id="purchase-form" method="POST">
-        <input type="hidden" name="id_immobile" value="<?php echo $immobile['id']; ?>">
-        <input type="hidden" name="prezzo" value="<?php echo $immobile['prezzo']; ?>">
-        <input type="hidden" name="acconto" value="<?php echo $acconto_amount; ?>">
+                <h2>Dati per l'Acquisto</h2>
+                <form id="purchase-form" method="POST" action="acquista.php?id=<?php echo $immobile['id']; ?>">
+                    <input type="hidden" name="id_immobile" value="<?php echo $immobile['id']; ?>">
+                    <input type="hidden" name="prezzo" value="<?php echo $immobile['prezzo']; ?>">
+                    <input type="hidden" name="acconto" value="<?php echo $acconto_amount; ?>">
 
-        <div class="form-group">
-            <label for="nome">Nome e Cognome</label>
-            <input type="text" id="nome" name="nome" value="<?php echo $utente['nome'] . ' ' . $utente['cognome']; ?>" readonly>
-        </div>
+                    <div class="form-group">
+                        <label for="nome">Nome e Cognome</label>
+                        <input type="text" id="nome" name="nome" value="<?php echo $utente['nome'] . ' ' . $utente['cognome']; ?>" readonly>
+                    </div>
 
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" value="<?php echo $utente['email']; ?>" readonly>
-        </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" value="<?php echo $utente['email']; ?>" readonly>
+                    </div>
 
-        <div class="form-group">
-            <label for="telefono">Telefono</label>
-            <input type="tel" id="telefono" name="telefono" value="<?php echo $utente['telefono']; ?>" required>
-        </div>
+                    <div class="form-group">
+                        <label for="telefono">Telefono</label>
+                        <input type="tel" id="telefono" name="telefono" value="<?php echo $utente['telefono']; ?>" required>
+                    </div>
 
-        <div class="form-group">
-            <label for="indirizzo">Indirizzo di Residenza</label>
-            <input type="text" id="indirizzo" name="indirizzo" value="<?php echo $utente['indirizzo']; ?>" required>
-        </div>
+                    <div class="form-group">
+                        <label for="indirizzo">Indirizzo di Residenza</label>
+                        <input type="text" id="indirizzo" name="indirizzo" value="<?php echo $utente['indirizzo']; ?>" required>
+                    </div>
 
-        <div class="form-group">
-            <label for="tipo_acquisto">Tipo di Acquisto</label>
-            <select id="tipo_acquisto" name="tipo_acquisto" required>
-                <option value="acquisto">Acquisto</option>
-                <option value="affitto">Affitto</option>
-            </select>
-        </div>
+                    <div class="form-group">
+                        <label for="tipo_acquisto">Tipo di Acquisto</label>
+                        <select id="tipo_acquisto" name="tipo_acquisto" required>
+                            <option value="acquisto">Acquisto</option>
+                            <option value="affitto">Affitto</option>
+                        </select>
+                    </div>
 
-        <div class="form-group">
-            <label>Metodo di Pagamento</label>
-            <div class="payment-methods">
-                <div class="payment-method" onclick="selectPayment(this, 'carta')">
-                    <i class="fas fa-credit-card"></i>
-                    <div>Carta di Credito</div>
+                    <!-- Modalità di pagamento -->
+                    <div class="form-group">
+                        <label>Modalità di Pagamento</label>
+                        <div class="payment-options">
+                            <div class="payment-option" onclick="selectPaymentOption(this, 'unica_soluzione')">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <div>Pagamento Completo</div>
+                                <div class="option-desc">Paga l'intero importo subito</div>
+                            </div>
+                            <div class="payment-option" onclick="selectPaymentOption(this, 'rate')">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>Pagamento Rateizzato</div>
+                                <div class="option-desc">Dividi il pagamento in rate mensili</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="modalita_pagamento" name="modalita_pagamento" required>
+                    </div>
+                    
+                    <!-- Opzioni per il pagamento a rate (visibili solo se selezionata l'opzione "rate") -->
+                    <div id="installment-options-container" class="installment-options" style="display: none;">
+                        <label>Scegli il piano di pagamento:</label>
+                        
+                        <div class="installment-option" onclick="selectInstallmentPlan(this, '12')">
+                            <input type="radio" name="piano_rate" value="12">
+                            <div class="installment-details">
+                                <div class="installment-duration">12 mesi</div>
+                                <div class="installment-amount"><?php echo number_format($opzioniRate[12], 2, ',', '.'); ?> € / mese</div>
+                                <div class="installment-total">Totale: <?php echo number_format($opzioniRate[12] * 12, 0, ',', '.'); ?> €</div>
+                            </div>
+                        </div>
+                        
+                        <div class="installment-option" onclick="selectInstallmentPlan(this, '24')">
+                            <input type="radio" name="piano_rate" value="24">
+                            <div class="installment-details">
+                                <div class="installment-duration">24 mesi</div>
+                                <div class="installment-amount"><?php echo number_format($opzioniRate[24], 2, ',', '.'); ?> € / mese</div>
+                                <div class="installment-total">Totale: <?php echo number_format($opzioniRate[24] * 24, 0, ',', '.'); ?> €</div>
+                            </div>
+                        </div>
+                        
+                        <div class="installment-option" onclick="selectInstallmentPlan(this, '36')">
+                            <input type="radio" name="piano_rate" value="36">
+                            <div class="installment-details">
+                                <div class="installment-duration">36 mesi</div>
+                                <div class="installment-amount"><?php echo number_format($opzioniRate[36], 2, ',', '.'); ?> € / mese</div>
+                                <div class="installment-total">Totale: <?php echo number_format($opzioniRate[36] * 36, 0, ',', '.'); ?> €</div>
+                            </div>
+                        </div>
+                        
+                        <div class="installment-option" onclick="selectInstallmentPlan(this, '48')">
+                            <input type="radio" name="piano_rate" value="48">
+                            <div class="installment-details">
+                                <div class="installment-duration">48 mesi</div>
+                                <div class="installment-amount"><?php echo number_format($opzioniRate[48], 2, ',', '.'); ?> € / mese</div>
+                                <div class="installment-total">Totale: <?php echo number_format($opzioniRate[48] * 48, 0, ',', '.'); ?> €</div>
+                            </div>
+                        </div>
+                        
+                        <div class="payment-details">
+                            <p><i class="fas fa-info-circle"></i> Il pagamento rateizzato prevede un tasso di interesse annuo del <?php echo $tassoInteresse; ?>%.</p>
+                            <p>È richiesto un acconto iniziale del <?php echo $acconto_percentage; ?>% (<?php echo number_format($acconto_amount, 0, ',', '.'); ?> €).</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Riepilogo del pagamento -->
+                    <div id="payment-summary" class="payment-summary">
+                        <h3>Riepilogo Pagamento</h3>
+                        <div class="summary-row">
+                            <div>Prezzo immobile:</div>
+                            <div><?php echo number_format($immobile['prezzo'], 0, ',', '.'); ?> €</div>
+                        </div>
+                        <div id="summary-plan" class="summary-row" style="display: none;">
+                            <div>Piano scelto:</div>
+                            <div id="summary-plan-value">-</div>
+                        </div>
+                        <div id="summary-interest" class="summary-row" style="display: none;">
+                            <div>Interessi totali:</div>
+                            <div id="summary-interest-value">-</div>
+                        </div>
+                        <div class="summary-row">
+                            <div>Acconto da versare ora:</div>
+                            <div><?php echo number_format($acconto_amount, 0, ',', '.'); ?> €</div>
+                        </div>
+                        <div class="summary-row" id="summary-total">
+                            <div>Importo totale:</div>
+                            <div id="summary-total-value"><?php echo number_format($immobile['prezzo'], 0, ',', '.'); ?> €</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Metodo di pagamento per l'acconto -->
+                    <div class="form-group">
+                        <label>Metodo di Pagamento per l'Acconto</label>
+                        <div class="payment-methods">
+                            <div class="payment-method" onclick="selectPayment(this, 'carta')">
+                                <i class="fas fa-credit-card"></i>
+                                <div>Carta di Credito</div>
+                            </div>
+                            <div class="payment-method" onclick="selectPayment(this, 'bonifico')">
+                                <i class="fas fa-university"></i>
+                                <div>Bonifico Bancario</div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="metodo_pagamento" name="metodo_pagamento" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="note">Note aggiuntive (opzionale)</label>
+                        <textarea id="note" name="note" rows="4"></textarea>
+                    </div>
+
+                    <div class="terms-check">
+                        <input type="checkbox" id="terms" name="terms" required>
+                        <label for="terms">
+                            Dichiaro di aver letto e accettato i <a href="termini.php" target="_blank">Termini e Condizioni</a> e la <a href="privacy.php" target="_blank">Privacy Policy</a>.
+                        </label>
+                    </div>
+
+                    <div id="standard-submit">
+                        <button type="submit" class="btn-submit">Procedi con l'Acquisto</button>
+                        <a href="immobile.php?id=<?php echo $immobile['id']; ?>" class="btn-cancel">Annulla</a>
+                    </div>
+                </form>
+                
+                <!-- Form per pagamento con Stripe (visibile solo quando viene selezionato il metodo carta) -->
+                <div id="stripe-payment-form" style="display: none; margin-top: 20px;">
+                    <h3>Pagamento con Carta</h3>
+                    <form id="stripe-form">
+                        <div id="card-element">
+                            <!-- Qui sarà inserito il form per la carta -->
+                        </div>
+                        <div id="card-errors" class="payment-error" role="alert"></div>
+                        <button id="stripe-submit" class="btn-submit" style="margin-top: 15px;">Paga Acconto</button>
+                    </form>
                 </div>
-                <div class="payment-method" onclick="selectPayment(this, 'bonifico')">
-                    <i class="fas fa-university"></i>
-                    <div>Bonifico Bancario</div>
+                
+                <div id="payment-processing" class="payment-processing" style="display: none;">
+                    <i class="fas fa-spinner fa-spin"></i> Elaborazione del pagamento in corso...
+                </div>
+                
+                <div id="payment-success" class="payment-success" style="display: none;">
+                    <i class="fas fa-check-circle"></i> Pagamento effettuato con successo! Stai per essere reindirizzato...
+                </div>
+                
+                <!-- Informazioni bonifico bancario (visibili solo quando viene selezionato il metodo bonifico) -->
+                <div id="bank-transfer-info" style="display: none; margin-top: 20px;">
+                    <h3>Informazioni per il Bonifico Bancario</h3>
+                    <div class="bank-info">
+                        <p><strong>Intestatario:</strong> Immobiliare S.r.l.</p>
+                        <p><strong>IBAN:</strong> IT60X0542811101000000123456</p>
+                        <p><strong>Banca:</strong> Banca Nazionale del Lavoro</p>
+                        <p><strong>Causale:</strong> Acconto Immobile ID: <?php echo $immobile['id']; ?> - <?php echo $immobile['nome']; ?></p>
+                        <p><strong>Importo:</strong> <?php echo number_format($acconto_amount, 2, ',', '.'); ?> €</p>
+                    </div>
+                    <div class="bank-note">
+                        <p><i class="fas fa-info-circle"></i> Dopo aver effettuato il bonifico, inviaci la ricevuta di pagamento all'indirizzo email: <strong>pagamenti@immobiliare.it</strong></p>
+                        <p>Elaboreremo la tua richiesta entro 24-48 ore lavorative dalla ricezione del pagamento.</p>
+                    </div>
                 </div>
             </div>
-            <input type="hidden" id="metodo_pagamento" name="metodo_pagamento" required>
         </div>
-
-        <div class="form-group">
-            <label for="note">Note aggiuntive (opzionale)</label>
-            <textarea id="note" name="note" rows="4"></textarea>
-        </div>
-
-        <div class="terms-check">
-            <input type="checkbox" id="terms" name="terms" required>
-            <label for="terms">
-                Dichiaro di aver letto e accettato i <a href="termini.php" target="_blank">Termini e Condizioni</a> e la <a href="privacy.php" target="_blank">Privacy Policy</a>.
-            </label>
-        </div>
-
-        <button type="submit" id="submit-button" class="btn-submit">Conferma Pagamento Acconto</button>
-
-        <div id="payment-processing" class="payment-processing" style="display: none;">
-            <i class="fas fa-spinner fa-spin"></i> Elaborazione del pagamento in corso...
-        </div>
-        <div id="payment-success" class="payment-success" style="display: none;">
-            <i class="fas fa-check-circle"></i> Pagamento completato con successo! Sarai reindirizzato...
-        </div>
-
-        <a href="immobile.php?id=<?php echo $immobile['id']; ?>" class="btn-cancel">Annulla</a>
-    </form>
-
-    <p class="note">
-        <i class="fas fa-info-circle"></i> Nota: Verrà addebitato un acconto pari al <?php echo $acconto_percentage; ?>% (<?php echo number_format($acconto_amount, 0, ',', '.'); ?> €).
-    </p>
-</div>
-
-<!-- Stripe JS -->
-<script src="https://js.stripe.com/v3/"></script>
-
-<script>
-function selectPayment(element, metodo) {
-    document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
-    element.classList.add('selected');
-    document.getElementById('metodo_pagamento').value = metodo;
-}
-
-document.getElementById('purchase-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const metodo = document.getElementById('metodo_pagamento').value;
-
-    if (!metodo) {
-        alert("Seleziona un metodo di pagamento.");
-        return;
-    }
-
-    if (!document.getElementById('terms').checked) {
-        alert("Devi accettare i termini e condizioni.");
-        return;
-    }
-
-    if (metodo === 'bonifico') {
-        this.action = "processa_acquisto.php";
-        this.submit();
-    } else if (metodo === 'carta') {
-        // Avvia Stripe Checkout
-        document.getElementById('payment-processing').style.display = 'block';
-
-        const formData = new FormData(this);
-
-        const response = await fetch('processa_acquisto.php', {
-            method: 'POST',
-            body: formData
-        });
-
-        const result = await response.json();
-
-        if (result.sessionId) {
-            const stripe = Stripe("pk_test_XXXXXXXXXXXXXXXXXXXXXXXX"); // Sostituisci con la tua chiave pubblica Stripe
-            stripe.redirectToCheckout({ sessionId: result.sessionId });
-        } else {
-            alert("Errore durante l'avvio del pagamento.");
-            document.getElementById('payment-processing').style.display = 'none';
-        }
-    }
-});
-</script>
-
-
-
+    </div>
 
     <!-- Footer -->
     <footer>
-        <div class="footer-content">
-            <div class="footer-column">
-                <h3>Chi Siamo</h3>
-                <p>Immobiliare è la tua agenzia di fiducia con oltre 20 anni di esperienza nel settore immobiliare in tutta Italia.</p>
+        <div class="footer-container">
+            <div class="footer-section">
+                <h3>Immobiliare</h3>
+                <p>La tua soluzione per la ricerca di immobili in Italia.</p>
             </div>
-            <div class="footer-column">
+            <div class="footer-section">
                 <h3>Link Utili</h3>
                 <ul>
-                    <li><a href="immobili.php">Ricerca Immobili</a></li>
-                    <li><a href="servizi.php">I Nostri Servizi</a></li>
-                    <li><a href="privacy.php">Privacy Policy</a></li>
-                    <li><a href="contatti.php">Contattaci</a></li>
+                    <li><a href="home-page.php">Home</a></li>
+                    <li><a href="immobili.php">Immobili</a></li>
+                    <li><a href="contatti.php">Contatti</a></li>
+                    <li><a href="faq.php">FAQ</a></li>
                 </ul>
             </div>
-            <div class="footer-column">
+            <div class="footer-section">
                 <h3>Contatti</h3>
                 <p><i class="fas fa-map-marker-alt"></i> Via Roma 123, Milano</p>
                 <p><i class="fas fa-phone"></i> +39 02 1234567</p>
                 <p><i class="fas fa-envelope"></i> info@immobiliare.it</p>
-                <div class="social-media">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+            <div class="footer-section">
+                <h3>Seguici</h3>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
                 </div>
             </div>
         </div>
@@ -603,153 +495,207 @@ document.getElementById('purchase-form').addEventListener('submit', async functi
     </footer>
 
     <script>
-        // Crea un'istanza di Stripe Elements
-        const stripe = Stripe('pk_test_51RLft5R6k5lJFmZtRtyq9mvqIbZBnn6kCMbduBBzSBiG71Ay0pGexZBQy5orhOFOay9ykeeOkd7MITAGaIULDpwj00Fh2M2eZv');
+        // Inizializzazione di Stripe
+        const stripe = Stripe('your_publishable_key'); // Sostituire con la tua chiave pubblica Stripe
         const elements = stripe.elements();
-
-        // Crea un elemento card
-        const cardElement = elements.create('card', {
-            style: {
-                base: {
-                    color: '#32325d',
-                    fontFamily: '"Montserrat", Helvetica, sans-serif',
-                    fontSmoothing: 'antialiased',
-                    fontSize: '16px',
-                    '::placeholder': {
-                        color: '#aab7c4'
-                    }
-                },
-                invalid: {
-                    color: '#fa755a',
-                    iconColor: '#fa755a'
+        
+        // Stile del form di carta
+        const cardElementStyle = {
+            base: {
+                color: '#32325d',
+                fontFamily: '"Montserrat", Helvetica, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': {
+                    color: '#aab7c4'
                 }
+            },
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
             }
-        });
-
-        // Aggiungi l'elemento card al form
+        };
+        
+        // Creazione dell'elemento card
+        const cardElement = elements.create('card', {style: cardElementStyle});
         cardElement.mount('#card-element');
-
-        // Gestisci gli errori di validazione in tempo reale
+        
+        // Gestione degli errori della carta
         cardElement.addEventListener('change', function(event) {
-            var displayError = document.getElementById('card-errors');
+            const displayError = document.getElementById('card-errors');
             if (event.error) {
                 displayError.textContent = event.error.message;
             } else {
                 displayError.textContent = '';
             }
         });
-
-        // Funzione per selezionare il metodo di pagamento
-        function selectPayment(element, method) {
-            // Rimuovi la classe 'selected' da tutti gli elementi
-            const paymentMethods = document.querySelectorAll('.payment-method');
-            paymentMethods.forEach(el => {
+        
+        // Funzione di selezione modalità di pagamento
+        function selectPaymentOption(element, option) {
+            // Rimuovi la classe 'selected' da tutte le opzioni
+            document.querySelectorAll('.payment-option').forEach(function(el) {
                 el.classList.remove('selected');
             });
             
-            // Aggiungi la classe 'selected' all'elemento cliccato
+            // Aggiungi la classe 'selected' all'opzione selezionata
             element.classList.add('selected');
             
-            // Imposta il valore del metodo di pagamento
+            // Imposta il valore nel campo nascosto
+            document.getElementById('modalita_pagamento').value = option;
+            
+            // Mostra/nascondi le opzioni di rate
+            if (option === 'rate') {
+                document.getElementById('installment-options-container').style.display = 'block';
+            } else {
+                document.getElementById('installment-options-container').style.display = 'none';
+                // Reset dei valori nel riepilogo
+                updatePaymentSummary();
+            }
+        }
+        
+        // Funzione di selezione piano rate
+        function selectInstallmentPlan(element, plan) {
+            // Rimuovi la classe 'selected' da tutte le opzioni
+            document.querySelectorAll('.installment-option').forEach(function(el) {
+                el.classList.remove('selected');
+            });
+            
+            // Aggiungi la classe 'selected' all'opzione selezionata
+            element.classList.add('selected');
+            
+            // Seleziona il radio button
+            element.querySelector('input[type="radio"]').checked = true;
+            
+            // Aggiorna il riepilogo del pagamento
+            updatePaymentSummary(plan);
+        }
+        
+        // Funzione di aggiornamento riepilogo pagamento
+        function updatePaymentSummary(plan = null) {
+            const prezzo = <?php echo $immobile['prezzo']; ?>;
+            const prezzoFormattato = new Intl.NumberFormat('it-IT').format(prezzo);
+            
+            let totalAmount = prezzo;
+            let interestAmount = 0;
+            
+            // Elementi del riepilogo
+            const summaryPlan = document.getElementById('summary-plan');
+            const summaryPlanValue = document.getElementById('summary-plan-value');
+            const summaryInterest = document.getElementById('summary-interest');
+            const summaryInterestValue = document.getElementById('summary-interest-value');
+            const summaryTotalValue = document.getElementById('summary-total-value');
+            
+            // Se è stato selezionato un piano
+            if (plan) {
+                // Mostra dettagli del piano
+                summaryPlan.style.display = 'flex';
+                summaryInterest.style.display = 'flex';
+                
+                // Ottieni la rata mensile dal piano selezionato
+                const rataMensile = <?php echo json_encode($opzioniRate); ?>[plan];
+                const totaleConInteressi = rataMensile * plan;
+                interestAmount = totaleConInteressi - prezzo;
+                
+                summaryPlanValue.textContent = plan + ' mesi - ' + new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(rataMensile) + ' € / mese';
+                summaryInterestValue.textContent = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(interestAmount) + ' €';
+                
+                totalAmount = totaleConInteressi;
+            } else {
+                // Nascondi dettagli del piano
+                summaryPlan.style.display = 'none';
+                summaryInterest.style.display = 'none';
+            }
+            
+            // Aggiorna l'importo totale
+            summaryTotalValue.textContent = new Intl.NumberFormat('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalAmount) + ' €';
+        }
+        
+        // Funzione per selezionare il metodo di pagamento
+        function selectPayment(element, method) {
+            // Rimuovi la classe 'selected' da tutti i metodi
+            document.querySelectorAll('.payment-method').forEach(function(el) {
+                el.classList.remove('selected');
+            });
+            
+            // Aggiungi la classe 'selected' al metodo selezionato
+            element.classList.add('selected');
+            
+            // Imposta il valore nel campo nascosto
             document.getElementById('metodo_pagamento').value = method;
             
-            // Mostra o nascondi il form di Stripe a seconda del metodo selezionato
-            const stripeForm = document.getElementById('stripe-payment-form');
+            // Mostra/nascondi i form di pagamento
             if (method === 'carta') {
-                stripeForm.style.display = 'block';
+                document.getElementById('stripe-payment-form').style.display = 'block';
+                document.getElementById('bank-transfer-info').style.display = 'none';
+                document.getElementById('standard-submit').style.display = 'none';
+            } else if (method === 'bonifico') {
+                document.getElementById('stripe-payment-form').style.display = 'none';
+                document.getElementById('bank-transfer-info').style.display = 'block';
+                document.getElementById('standard-submit').style.display = 'block';
             } else {
-                stripeForm.style.display = 'none';
+                document.getElementById('stripe-payment-form').style.display = 'none';
+                document.getElementById('bank-transfer-info').style.display = 'none';
+                document.getElementById('standard-submit').style.display = 'block';
             }
         }
-
-        // Gestisci l'invio del form
-        const form = document.getElementById('purchase-form');
-        form.addEventListener('submit', function(event) {
+        
+        // Gestione della sottomissione del form di pagamento con Stripe
+        document.getElementById('stripe-form').addEventListener('submit', function(event) {
             event.preventDefault();
             
-            const submitButton = document.getElementById('submit-button');
-            const paymentProcessing = document.getElementById('payment-processing');
-            const paymentSuccess = document.getElementById('payment-success');
-            const paymentMethod = document.getElementById('metodo_pagamento').value;
-
-            // Disabilita il pulsante e mostra il messaggio di elaborazione
-            submitButton.disabled = true;
-            paymentProcessing.style.display = 'block';
+            // Mostra l'indicatore di elaborazione
+            document.getElementById('payment-processing').style.display = 'block';
+            document.getElementById('stripe-submit').disabled = true;
             
-            if (paymentMethod === 'carta') {
-                // Crea un token con Stripe
-                stripe.createToken(cardElement).then(function(result) {
-                    if (result.error) {
-                        // Mostra l'errore all'utente
-                        var errorElement = document.getElementById('card-errors');
-                        errorElement.textContent = result.error.message;
-                        submitButton.disabled = false;
-                        paymentProcessing.style.display = 'none';
-                    } else {
-                        // Invia il token al server
-                        stripeTokenHandler(result.token);
-                    }
-                });
-            } else {
-                // Per il bonifico, invia direttamente i dati senza token
-                submitFormData();
-            }
-        });
-
-        // Invia il token al server
-        function stripeTokenHandler(token) {
-            // Crea un hidden input con il token
-            const hiddenInput = document.createElement('input');
-            hiddenInput.setAttribute('type', 'hidden');
-            hiddenInput.setAttribute('name', 'stripeToken');
-            hiddenInput.setAttribute('value', token.id);
-            form.appendChild(hiddenInput);
-            
-            // Invia i dati del form
-            submitFormData();
-        }
-
-        // Funzione per inviare i dati del form
-        function submitFormData() {
-            // Raccoglie tutti i dati del form
-            const formData = new FormData(form);
-            
-            // Invia i dati al server
-            fetch('processa_acquisto.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                const paymentProcessing = document.getElementById('payment-processing');
-                const paymentSuccess = document.getElementById('payment-success');
-                const submitButton = document.getElementById('submit-button');
-                
-                paymentProcessing.style.display = 'none';
-                
-                if (data.success) {
-                    paymentSuccess.style.display = 'block';
-                    // Reindirizza dopo 2 secondi
-                    setTimeout(() => {
-                        window.location.href = data.redirect || 'miei_acquisti.php';
-                    }, 2000);
+            stripe.createToken(cardElement).then(function(result) {
+                if (result.error) {
+                    // Gestione errore
+                    document.getElementById('card-errors').textContent = result.error.message;
+                    document.getElementById('payment-processing').style.display = 'none';
+                    document.getElementById('stripe-submit').disabled = false;
                 } else {
-                    // Mostra l'errore
-                    document.getElementById('card-errors').textContent = data.error || 'Si è verificato un errore durante il pagamento.';
-                    submitButton.disabled = false;
+                    // Token creato correttamente, procediamo con l'invio del form
+                    // In un'implementazione reale, qui invieresti il token al server
+                    
+                    // Aggiungi il token al form principale e invia
+                    const tokenInput = document.createElement('input');
+                    tokenInput.setAttribute('type', 'hidden');
+                    tokenInput.setAttribute('name', 'stripeToken');
+                    tokenInput.setAttribute('value', result.token.id);
+                    document.getElementById('purchase-form').appendChild(tokenInput);
+                    
+                    // Simula il pagamento riuscito (in produzione, questa logica dovrebbe essere sul server)
+                    setTimeout(function() {
+                        document.getElementById('payment-processing').style.display = 'none';
+                        document.getElementById('payment-success').style.display = 'block';
+                        
+                        // Invia il form principale dopo 2 secondi
+                        setTimeout(function() {
+                            document.getElementById('purchase-form').submit();
+                        }, 2000);
+                    }, 2000);
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('card-errors').textContent = 'Si è verificato un errore durante la connessione al server.';
-                document.getElementById('submit-button').disabled = false;
-                document.getElementById('payment-processing').style.display = 'none';
             });
-        }
+        });
+        
+        // Inizializzazione del form
+        document.addEventListener('DOMContentLoaded', function() {
+            // Impostazione valori default
+            selectPaymentOption(document.querySelector('.payment-option'), 'unica_soluzione');
+            selectPayment(document.querySelector('.payment-method'), 'carta');
+            
+            // Validator per il form
+            document.getElementById('purchase-form').addEventListener('submit', function(event) {
+                // Evita doppi submit
+                if (document.getElementById('metodo_pagamento').value === 'carta') {
+                    event.preventDefault();
+                    document.getElementById('stripe-form').dispatchEvent(new Event('submit'));
+                    return false;
+                }
+                
+                return true;
+            });
+        });
     </script>
 </body>
 </html>
-
-<?php
-$conn->close(); // Chiudi la connessione
-?>

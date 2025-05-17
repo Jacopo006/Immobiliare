@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Mag 06, 2025 alle 10:49
+-- Creato il: Mag 17, 2025 alle 17:33
 -- Versione del server: 10.4.32-MariaDB
 -- Versione PHP: 8.2.12
 
@@ -36,7 +36,10 @@ CREATE TABLE `acquisti` (
   `id_utente` int(11) NOT NULL,
   `acconto` decimal(10,2) DEFAULT NULL,
   `metodo_pagamento` varchar(50) DEFAULT NULL,
+  `piano_rate` int(11) DEFAULT NULL,
+  `importo_totale` decimal(10,2) DEFAULT NULL,
   `tipo_acquisto` varchar(50) DEFAULT NULL,
+  `modalita_pagamento` varchar(50) DEFAULT NULL,
   `stato_pagamento` varchar(50) DEFAULT NULL,
   `payment_id` varchar(100) DEFAULT NULL,
   `note` text DEFAULT NULL,
@@ -47,9 +50,8 @@ CREATE TABLE `acquisti` (
 -- Dump dei dati per la tabella `acquisti`
 --
 
-INSERT INTO `acquisti` (`id`, `id_immobile`, `id_utente`, `acconto`, `metodo_pagamento`, `tipo_acquisto`, `stato_pagamento`, `payment_id`, `note`, `data_acquisto`) VALUES
-(1, 60, 4, 40000.00, 'bonifico', 'acquisto', 'pending', 'bonifico_1746520774_4', '', '2025-05-06 08:39:34'),
-(2, 61, 4, 12000.00, 'bonifico', 'acquisto', 'pending', 'bonifico_1746521103_4', '', '2025-05-06 08:45:03');
+INSERT INTO `acquisti` (`id`, `id_immobile`, `id_utente`, `acconto`, `metodo_pagamento`, `piano_rate`, `importo_totale`, `tipo_acquisto`, `modalita_pagamento`, `stato_pagamento`, `payment_id`, `note`, `data_acquisto`) VALUES
+(7, 63, 3, 48000.00, '0', NULL, 480000.00, 'acquisto', 'unica_soluzione', 'in attesa', NULL, 'fgfdgfdgd', '2025-05-17 15:32:54');
 
 -- --------------------------------------------------------
 
@@ -150,10 +152,11 @@ CREATE TABLE `immobili` (
 --
 
 INSERT INTO `immobili` (`id`, `nome`, `descrizione`, `prezzo`, `immagine`, `categoria_id`, `agente_id`, `stato`, `data_inserimento`, `metri_quadri`, `stanze`, `bagni`, `citta`, `provincia`) VALUES
+(59, 'Appartamento moderno', 'Appartamento moderno in zona centrale', 320000.00, 'casa1.jpg', 1, 1, '', '2025-04-18 19:27:21', 120, 5, 2, 'Roma', 'RM'),
 (60, 'Villa con giardino', 'Villa spaziosa con giardino privato', 400000.00, 'casa2.jpg', 2, 2, '', '2025-04-18 19:27:21', 180, 6, 3, 'Milano', 'MI'),
 (61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, '', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE'),
-(62, 'Appartamento economico', 'Appartamento economico vicino ai servizi', 95000.00, 'casa4.jpg', 1, 2, 'disponibile', '2025-04-18 19:27:21', 60, 2, 1, 'Napoli', 'NA'),
-(63, 'Villa bifamiliare', 'Villa grande adatta per due famiglie', 480000.00, 'casa5.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 210, 8, 4, 'Verona', 'VR'),
+(62, 'Appartamento economico', 'Appartamento economico vicino ai servizi', 95000.00, 'casa4.jpg', 1, 2, '', '2025-04-18 19:27:21', 60, 2, 1, 'Napoli', 'NA'),
+(63, 'Villa bifamiliare', 'Villa grande adatta per due famiglie', 480000.00, 'casa5.jpg', 2, 1, 'venduto', '2025-04-18 19:27:21', 210, 8, 4, 'Verona', 'VR'),
 (64, 'Monolocale centrale', 'Monolocale perfetto per studenti', 85000.00, 'casa6.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 35, 1, 1, 'Pisa', 'PI'),
 (65, 'Appartamento luminoso', 'Luminoso appartamento vicino al centro', 240000.00, 'casa7.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 85, 3, 1, 'Bologna', 'BO'),
 (66, 'Villa esclusiva', 'Villa esclusiva con piscina', 750000.00, 'casa8.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 300, 7, 4, 'Cagliari', 'CA'),
@@ -179,13 +182,6 @@ CREATE TABLE `preferiti` (
   `data_aggiunta` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dump dei dati per la tabella `preferiti`
---
-
-INSERT INTO `preferiti` (`id`, `id_utente`, `id_immobile`, `data_aggiunta`) VALUES
-(12, 3, 62, '2025-04-29 07:55:29');
-
 -- --------------------------------------------------------
 
 --
@@ -201,6 +197,16 @@ CREATE TABLE `transazioni` (
   `importo` decimal(10,2) DEFAULT NULL,
   `tipo` enum('acquisto','affitto') DEFAULT 'acquisto'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `transazioni`
+--
+
+INSERT INTO `transazioni` (`id`, `id_utente`, `id_immobile`, `data_transazione`, `importo`, `tipo`) VALUES
+(2, 3, 59, '2025-05-10 11:31:30', 32000.00, 'acquisto'),
+(3, 3, 60, '2025-05-10 11:33:23', 40000.00, 'acquisto'),
+(4, 3, 61, '2025-05-10 11:37:02', 12000.00, 'acquisto'),
+(5, 3, 62, '2025-05-17 14:48:13', 9500.00, 'acquisto');
 
 -- --------------------------------------------------------
 
@@ -299,7 +305,7 @@ ALTER TABLE `utenti`
 -- AUTO_INCREMENT per la tabella `acquisti`
 --
 ALTER TABLE `acquisti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT per la tabella `agenti_immobiliari`
@@ -335,7 +341,7 @@ ALTER TABLE `preferiti`
 -- AUTO_INCREMENT per la tabella `transazioni`
 --
 ALTER TABLE `transazioni`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT per la tabella `utenti`
