@@ -1,0 +1,44 @@
+gantt
+    title Agenzia Immobiliare Online - Piano di Progetto
+    dateFormat YYYY-MM-DD
+    axisFormat %d/%m/%Y
+    
+    section Pianificazione
+    Ricerca di mercato             :p1, 2025-06-01, 3d
+    Definizione modello di business:p2, after p1, 2d
+    Costituzione legale            :p3, 2025-06-04, 2d
+    Budget e timeline              :p4, after p2 p3, 1d
+    
+    section Allestimento Ufficio Fisico
+    Ricerca location               :a1, 2025-06-07, 5d
+    Negoziazione contratto         :a2, after a1, 3d
+    Design interni ufficio         :a3, after a2, 4d
+    Allestimento IT ufficio        :a4, after a3, 3d
+    
+    section Sviluppo Sito Web
+    Raccolta requisiti sito        :s1, 2025-06-07, 3d
+    Wireframe & design UI          :s2, after s1, 5d
+    Sviluppo frontend              :s3, after s2, 7d
+    Sviluppo backend               :s4, 2025-06-10, 7d
+    Integrazione CMS               :s5, after s3 s4, 3d
+    Test & QA sito                 :s6, after s5, 4d
+    
+    section Acquisizione & Listing Immobili
+    Partnership proprietari        :i1, 2025-06-07, 5d
+    Servizio fotografico           :i2, after i1, 5d
+    Caricamento annunci            :i3, after i2, 3d
+    
+    section Marketing & SEO
+    SEO ottimizzazione             :m1, 2025-06-25, 5d
+    Campagna social media          :m2, 2025-06-29, 7d
+    Setup ads a pagamento          :m3, after m1, 5d
+    Creazione contenuti            :m4, after m1, 4d
+    
+    section Lancio & Operazioni
+    Soft launch ufficio & sito     :l1, 2025-06-29, 2d
+    Raccolta feedback iniziale     :l2, after l1, 3d
+    Regolazioni post-launch        :l3, after l2, 2d
+    
+    section Manutenzione & Feedback
+    Supporto operativo continuativo:c1, after l3, 30d
+    Analisi prestazioni & report   :c2, after l3, 30d
