@@ -143,7 +143,7 @@ if ($result_categorie) {
         <div class="sidebar">
             <ul>
                 <li><a href="#miei-immobili" class="active"><i class="fas fa-building"></i> I Miei Immobili</a></li>
-                <li><a href="#nuovo-immobile"><i class="fas fa-plus-circle"></i> Aggiungi Immobile</a></li>
+                <li><a href="inserisci_immobile.php"></i> Nuovo Immobile</a>
                 <li><a href="#statistiche"><i class="fas fa-chart-line"></i> Statistiche</a></li>
                 <li><a href="#contatti-ricevuti"><i class="fas fa-envelope"></i> Richieste Ricevute</a></li>
                 <li><a href="business_plan.php"><i class="fas fa-file-invoice-dollar"></i> Business Plan</a></li>
@@ -166,7 +166,7 @@ if ($result_categorie) {
             <section id="miei-immobili" class="card">
                 <div class="card-header">
                     <h2><i class="fas fa-building"></i> I Miei Immobili</h2>
-                    <a href="#nuovo-immobile" class="btn btn-primary"><i class="fas fa-plus"></i> Nuovo Immobile</a>
+                    <a href="inserisci_immobile.php" class="btn btn-primary"><i class="fas fa-plus"></i> Nuovo Immobile</a>
                 </div>
                 
                 <div class="card-body">
@@ -208,95 +208,10 @@ if ($result_categorie) {
                             </tbody>
                         </table>
                     </div>
-                    <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fas fa-building"></i>
-                        <h3>Nessun immobile inserito</h3>
-                        <p>Non hai ancora inserito immobili da gestire. Inizia aggiungendo il tuo primo immobile!</p>
-                        <a href="#nuovo-immobile" class="btn btn-primary"><i class="fas fa-plus"></i> Aggiungi Immobile</a>
-                    </div>
                     <?php endif; ?>
                 </div>
             </section>
 
-            <section id="nuovo-immobile" class="card">
-                <div class="card-header">
-                    <h2><i class="fas fa-plus-circle"></i> Aggiungi Nuovo Immobile</h2>
-                </div>
-                
-                <div class="card-body">
-                    <form action="inserisci_immobile.php" method="POST" enctype="multipart/form-data">
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="nome"><i class="fas fa-tag"></i> Nome Immobile <span class="required">*</span></label>
-                                <input type="text" id="nome" name="nome" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="categoria"><i class="fas fa-list"></i> Categoria <span class="required">*</span></label>
-                                <select id="categoria" name="categoria_id" required>
-                                    <option value="">Seleziona una categoria</option>
-                                    <?php foreach($categorie as $categoria): ?>
-                                        <option value="<?php echo $categoria['id']; ?>"><?php echo htmlspecialchars($categoria['nome']); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="prezzo"><i class="fas fa-euro-sign"></i> Prezzo <span class="required">*</span></label>
-                                <input type="number" id="prezzo" name="prezzo" min="0" step="1000" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="stato"><i class="fas fa-info-circle"></i> Stato <span class="required">*</span></label>
-                                <select id="stato" name="stato" required>
-                                    <option value="disponibile">Disponibile</option>
-                                    <option value="venduto">Venduto</option>
-                                    <option value="affittato">Affittato</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-4">
-                                <label for="metri_quadri"><i class="fas fa-vector-square"></i> Metri Quadri <span class="required">*</span></label>
-                                <input type="number" id="metri_quadri" name="metri_quadri" min="1" required>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label for="stanze"><i class="fas fa-door-open"></i> Stanze <span class="required">*</span></label>
-                                <input type="number" id="stanze" name="stanze" min="1" required>
-                            </div>
-                            <div class="form-group col-md-4">
-                                <label for="bagni"><i class="fas fa-bath"></i> Bagni <span class="required">*</span></label>
-                                <input type="number" id="bagni" name="bagni" min="1" required>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="citta"><i class="fas fa-map-marker-alt"></i> Città <span class="required">*</span></label>
-                                <input type="text" id="citta" name="citta" required>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="provincia"><i class="fas fa-map"></i> Provincia <span class="required">*</span></label>
-                                <input type="text" id="provincia" name="provincia" required>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="descrizione"><i class="fas fa-file-alt"></i> Descrizione <span class="required">*</span></label>
-                            <textarea id="descrizione" name="descrizione" rows="5" required></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="immagine"><i class="fas fa-image"></i> Immagine Principale <span class="required">*</span></label>
-                            <input type="file" id="immagine" name="immagine" accept="image/*" required>
-                            <small>Dimensione massima: 5MB. Formati supportati: JPG, PNG, GIF</small>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="reset" class="btn btn-secondary"><i class="fas fa-undo"></i> Reset</button>
-                            <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Salva Immobile</button>
                         </div>
                     </form>
                 </div>
