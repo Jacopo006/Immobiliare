@@ -13,6 +13,93 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_type']) || $_SESSION[
     exit();
 }
 
+// Inizializzazione della variabile messaggio
+$messaggio = '';
+$tipo_messaggio = '';
+$immobile_inserito = null;
+
+// Gestione del form sottomesso
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Recupero dei dati dal form
+    $nome = mysqli_real_escape_string($conn, $_POST['nome']);
+    $descrizione = mysqli_real_escape_string($conn, $_POST['descrizione']);
+    $prezzo = floatval($_POST['prezzo']);
+    $categoria_id = intval($_POST['categoria_id']);
+    $stato = mysqli_real_escape_string($conn, $_POST['stato']);
+    $metri_quadri = intval($_POST['metri_quadri']);
+    $stanze = intval($_POST['stanze']);
+    $bagni = intval($_POST['bagni']);
+    $citta = mysqli_real_escape_string($conn, $_POST['citta']);
+    $provincia = mysqli_real_escape_string($conn, strtoupper($_POST['provincia']));
+    $latitudine = floatval($_POST['latitudine']);
+    $longitudine = floatval($_POST['longitudine']);
+    $agente_id = $_SESSION['user_id'];
+
+    // Gestione dell'upload dell'immagine
+    $nome_file_immagine = '';
+    if (isset($_FILES['immagine']) && $_FILES['immagine']['error'] == 0) {
+        $estensioni_permesse = ['jpg', 'jpeg', 'png', 'gif'];
+        $nome_file = $_FILES['immagine']['name'];
+        $tmp_name = $_FILES['immagine']['tmp_name'];
+        $dimensione_file = $_FILES['immagine']['size'];
+        $estensione = strtolower(pathinfo($nome_file, PATHINFO_EXTENSION));
+
+        // Controllo estensione e dimensione
+        if (in_array($estensione, $estensioni_permesse) && $dimensione_file <= 5242880) { // 5MB
+            // Genera un nome univoco per il file
+            $nuovo_nome_file = uniqid() . '.' . $estensione;
+            $destinazione = 'img/immobili/' . $nuovo_nome_file;
+
+            // Verifico se la directory esiste, altrimenti la creo
+            if (!file_exists('img/immobili/')) {
+                mkdir('img/immobili/', 0777, true);
+            }
+
+            // Sposto il file caricato nella destinazione finale
+            if (move_uploaded_file($tmp_name, $destinazione)) {
+                $nome_file_immagine = $nuovo_nome_file;
+            } else {
+                $messaggio = "Errore durante il caricamento dell'immagine.";
+                $tipo_messaggio = "error";
+            }
+        } else {
+            $messaggio = "Formato file non supportato o dimensione troppo grande (max 5MB).";
+            $tipo_messaggio = "error";
+        }
+    } else {
+        $messaggio = "Errore nel caricamento dell'immagine.";
+        $tipo_messaggio = "error";
+    }
+
+    // Se non ci sono errori, procedo con l'inserimento nel database
+    if (empty($messaggio)) {
+        $sql = "INSERT INTO immobili (nome, descrizione, prezzo, immagine, categoria_id, agente_id, stato, metri_quadri, stanze, bagni, citta, provincia, latitudine, longitudine) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssdsiisissssdd", $nome, $descrizione, $prezzo, $nome_file_immagine, $categoria_id, $agente_id, $stato, $metri_quadri, $stanze, $bagni, $citta, $provincia, $latitudine, $longitudine);
+        
+        if ($stmt->execute()) {
+            $immobile_id = $conn->insert_id;
+            $messaggio = "Immobile inserito con successo!";
+            $tipo_messaggio = "success";
+            
+            // Recupero i dettagli dell'immobile appena inserito per visualizzarli
+            $sql_immobile = "SELECT i.*, c.nome AS categoria_nome FROM immobili i 
+                             LEFT JOIN categorie c ON i.categoria_id = c.id 
+                             WHERE i.id = ?";
+            $stmt_immobile = $conn->prepare($sql_immobile);
+            $stmt_immobile->bind_param("i", $immobile_id);
+            $stmt_immobile->execute();
+            $result_immobile = $stmt_immobile->get_result();
+            $immobile_inserito = $result_immobile->fetch_assoc();
+        } else {
+            $messaggio = "Errore durante l'inserimento dell'immobile: " . $stmt->error;
+            $tipo_messaggio = "error";
+        }
+    }
+}
+
 // Query per recuperare le categorie di immobili
 $categorie = [];
 $sql = "SELECT id, nome FROM categorie ORDER BY nome";
@@ -41,7 +128,7 @@ $longitudine_default = 9.1900;
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="dashboard_agente.css">
-    <link rel="stylesheet" href="inserisci.css.css">
+    <link rel="stylesheet" href="inserisci.css">
 
     <style>
         .form-container {
@@ -202,6 +289,85 @@ $longitudine_default = 9.1900;
             border-radius: 5px;
             margin-bottom: 15px;
         }
+        
+        /* Messaggio di avviso */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 5px;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+        
+        /* Dettagli immobile inserito */
+        .immobile-inserito {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .immobile-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .immobile-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #3498db;
+        }
+        
+        .immobile-price {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2ecc71;
+        }
+        
+        .immobile-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .immobile-detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .immobile-detail-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .immobile-detail-value {
+            font-weight: 500;
+        }
+        
+        .immobile-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -239,6 +405,65 @@ $longitudine_default = 9.1900;
     
     <!-- Contenuto Principale -->
     <div class="container">
+        <?php if (!empty($messaggio)): ?>
+        <div class="alert alert-<?php echo $tipo_messaggio === 'success' ? 'success' : 'error'; ?>">
+            <?php echo $messaggio; ?>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($immobile_inserito): ?>
+        <!-- Visualizzazione dei dettagli dell'immobile inserito -->
+        <div class="immobile-inserito">
+            <div class="immobile-header">
+                <div class="immobile-title">
+                    <i class="fas fa-check-circle"></i> Immobile inserito con successo
+                </div>
+                <div class="immobile-price">
+                    € <?php echo number_format($immobile_inserito['prezzo'], 2, ',', '.'); ?>
+                </div>
+            </div>
+            
+            <div class="immobile-details">
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Nome</div>
+                    <div class="immobile-detail-value"><?php echo htmlspecialchars($immobile_inserito['nome']); ?></div>
+                </div>
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Categoria</div>
+                    <div class="immobile-detail-value"><?php echo htmlspecialchars($immobile_inserito['categoria_nome']); ?></div>
+                </div>
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Città</div>
+                    <div class="immobile-detail-value"><?php echo htmlspecialchars($immobile_inserito['citta']); ?> (<?php echo htmlspecialchars($immobile_inserito['provincia']); ?>)</div>
+                </div>
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Superficie</div>
+                    <div class="immobile-detail-value"><?php echo $immobile_inserito['metri_quadri']; ?> m²</div>
+                </div>
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Stanze</div>
+                    <div class="immobile-detail-value"><?php echo $immobile_inserito['stanze']; ?></div>
+                </div>
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Bagni</div>
+                    <div class="immobile-detail-value"><?php echo $immobile_inserito['bagni']; ?></div>
+                </div>
+                <div class="immobile-detail-item">
+                    <div class="immobile-detail-label">Stato</div>
+                    <div class="immobile-detail-value"><?php echo ucfirst($immobile_inserito['stato']); ?></div>
+                </div>
+            </div>
+            
+            <div class="immobile-actions">
+                <a href="dashboard_agente.php" class="btn-primary">
+                    <i class="fas fa-arrow-left"></i> Torna alla dashboard
+                </a>
+                <a href="inserisci_immobile.php" class="btn-primary">
+                    <i class="fas fa-plus"></i> Inserisci un altro immobile
+                </a>
+            </div>
+        </div>
+        <?php else: ?>
         <div class="form-container">
             <div class="form-title">Inserisci un nuovo immobile</div>
             <p class="form-text">Completa tutti i campi contrassegnati con * per inserire un nuovo immobile nel database.</p>
@@ -367,6 +592,7 @@ $longitudine_default = 9.1900;
                 </div>
             </form>
         </div>
+        <?php endif; ?>
     </div>
     
     <!-- Footer -->
@@ -444,86 +670,80 @@ $longitudine_default = 9.1900;
             
             // Crea marker iniziale se ci sono coordinate predefinite
             var marker;
-            if (defaultLat && defaultLng) {
-                marker = L.marker([defaultLat, defaultLng]).addTo(map);
-            } dell'upload dell'immagine
-            document.getElementById('immagine').addEventListener('change', function() {
-                var fileName = this.files[0]?.name || 'Nessun file selezionato';
-                document.getElementById('file-name').textContent = fileName;
-            });
-            
-            // Inizializzazione della mappa
-            var map = L.map('map').setView([45.4668, 9.1905], 6); // Centrata sull'Italia
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-            
-            var marker;
-            
-            // Funzione per aggiungere o spostare il marker
-            function placeMarker(e) {
-                var lat = e.latlng.lat.toFixed(8);
-                var lng = e.latlng.lng.toFixed(8);
-                
-                // Aggiorna i campi del form
-                document.getElementById('latitudine').value = lat;
-                document.getElementById('longitudine').value = lng;
-                
-                // Aggiunge o sposta il marker
-                if (marker) {
-                    marker.setLatLng(e.latlng);
-                } else {
-                    marker = L.marker(e.latlng).addTo(map);
-                }
+            if (defaultLat && defaultLng) {marker = L.marker([defaultLat, defaultLng]).addTo(map);
             }
             
-            // Gestisci il click sulla mappa
-            map.on('click', placeMarker);
+            // Aggiorna coordinate quando si clicca sulla mappa
+            map.on('click', function(e) {
+                var lat = e.latlng.lat;
+                var lng = e.latlng.lng;
+                
+                // Aggiorna i campi input
+                document.getElementById('latitudine').value = lat.toFixed(8);
+                document.getElementById('longitudine').value = lng.toFixed(8);
+                
+                // Aggiorna o crea marker
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng]).addTo(map);
+                }
+            });
             
-            // Aggiorna la mappa quando vengono inseriti valori nei campi
-            function updateMapFromInputs() {
+            // Aggiorna marker quando vengono modificati manualmente i campi input
+            document.getElementById('latitudine').addEventListener('change', updateMarkerFromInputs);
+            document.getElementById('longitudine').addEventListener('change', updateMarkerFromInputs);
+            
+            function updateMarkerFromInputs() {
                 var lat = parseFloat(document.getElementById('latitudine').value);
                 var lng = parseFloat(document.getElementById('longitudine').value);
                 
                 if (!isNaN(lat) && !isNaN(lng)) {
-                    var newLatLng = L.latLng(lat, lng);
-                    
                     if (marker) {
-                        marker.setLatLng(newLatLng);
+                        marker.setLatLng([lat, lng]);
                     } else {
-                        marker = L.marker(newLatLng).addTo(map);
+                        marker = L.marker([lat, lng]).addTo(map);
                     }
-                    
-                    map.setView(newLatLng, 13);
+                    map.setView([lat, lng], 12);
                 }
             }
             
-            // Aggiorna la mappa quando i campi vengono modificati
-            document.getElementById('latitudine').addEventListener('change', updateMapFromInputs);
-            document.getElementById('longitudine').addEventListener('change', updateMapFromInputs);
+            // Geocodifica l'indirizzo quando vengono modificati i campi città e provincia
+            document.getElementById('citta').addEventListener('change', geocodeAddress);
+            document.getElementById('provincia').addEventListener('change', geocodeAddress);
             
-            // Opzionale: geocoding inverso quando si seleziona una città
-            document.getElementById('citta').addEventListener('blur', function() {
-                var city = this.value.trim();
-                if (city) {
-                    // Utilizza Nominatim per trovare le coordinate della città
-                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}`)
+            function geocodeAddress() {
+                var citta = document.getElementById('citta').value;
+                var provincia = document.getElementById('provincia').value;
+                
+                if (citta && provincia) {
+                    var indirizzo = citta + ", " + provincia + ", Italia";
+                    
+                    // Utilizzo del servizio di geocodifica Nominatim
+                    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(indirizzo)}&limit=1`)
                         .then(response => response.json())
                         .then(data => {
                             if (data && data.length > 0) {
                                 var lat = parseFloat(data[0].lat);
                                 var lon = parseFloat(data[0].lon);
                                 
-                                map.setView([lat, lon], 13);
+                                document.getElementById('latitudine').value = lat.toFixed(8);
+                                document.getElementById('longitudine').value = lon.toFixed(8);
                                 
-                                // Non aggiornare automaticamente i campi lat/lon, lasciamo che l'utente clicchi sulla posizione esatta
+                                if (marker) {
+                                    marker.setLatLng([lat, lon]);
+                                } else {
+                                    marker = L.marker([lat, lon]).addTo(map);
+                                }
+                                
+                                map.setView([lat, lon], 13);
                             }
                         })
-                        .catch(error => console.error('Errore nel geocoding:', error));
+                        .catch(error => console.error('Errore nella geocodifica:', error));
                 }
-            });
+            }
         });
     </script>
 </body>
 </html>
+                
