@@ -336,7 +336,7 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="index.php">
+            <a class="navbar-brand" href="home-page.php">
                 <svg xmlns="http://www.w3.org/2000/svg" width="25" height="25" fill="currentColor" class="bi bi-house-door" viewBox="0 0 16 16">
                     <path d="M8 3L0 9V10.5H2V16H6V12H10V16H14V10.5H16V9L8 3Z" />
                 </svg>

@@ -95,7 +95,7 @@ $categorie_map = [
                     <li class="user-menu">
                         <a href="#"><i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name']); ?> <i class="fas fa-caret-down"></i></a>
                         <ul class="dropdown-menu">
-                            <li><a href="profile.php"><i class="fas fa-id-card"></i> Profilo</a></li>
+                            <li><a href="profilo-utente.php"h><i class="fas fa-id-card"></i> Profilo</a></li>
                             <?php if($_SESSION['user_type'] == 'utente'): ?>
                                 <li><a href="preferiti.php" class="active"><i class="fas fa-heart"></i> Preferiti</a></li>
                             <?php endif; ?>
