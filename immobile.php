@@ -70,6 +70,23 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style_immobile_dettaglio.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+          crossorigin=""/>
+    <style>
+        #map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .address {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
 </head>
 <body>
     <!-- Header con menu dinamico basato sul login -->
@@ -198,6 +215,15 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
                         </div>
                     </div>
 
+                    <div class="info-section">
+                        <h2>Posizione</h2>
+                        <div id="map-container"></div>
+                        <p class="address">
+                            <i class="fas fa-map-marker-alt"></i> 
+                            <?php echo $immobile['citta'] . ', ' . $immobile['provincia']; ?>
+                        </p>
+                    </div>
+
                     <?php if(!empty($immobile['agente_nome'])): ?>
                     <div class="info-section">
                         <h2>Contatta l'agente</h2>
@@ -264,88 +290,88 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
     </section>
 
     <!-- Sezione Immobili Simili -->
-<section id="immobili-simili">
-    <div class="container">
-        <h2>Immobili simili che potrebbero interessarti</h2>
-        
-        <?php
-        // Query per trovare immobili simili (stessa categoria e città)
-        $sql_simili = "SELECT i.id, i.nome, i.descrizione, i.prezzo, i.metri_quadri, i.stanze, i.bagni, 
-                              c.nome AS categoria, i.citta, i.provincia, i.immagine, i.stato
-                      FROM immobili i
-                      JOIN categorie c ON i.categoria_id = c.id
-                      WHERE i.stato = 'disponibile' 
-                      AND i.id != $id 
-                      AND (i.categoria_id = {$immobile['categoria_id']} OR i.citta = '{$immobile['citta']}')
-                      LIMIT 3";
-        
-        $result_simili = $conn->query($sql_simili);
-        
-        if ($result_simili->num_rows > 0):
-        ?>
-        <div class="immobili-grid">
-            <?php while($row = $result_simili->fetch_assoc()): 
-                // Verifica se l'immobile è nei preferiti
-                $sim_in_preferiti = false;
-                if (isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente') {
-                    $sim_id = $row['id'];
-                    $user_id = $_SESSION['user_id'];
-                    $sql_sim_preferiti = "SELECT * FROM preferiti WHERE id_utente = $user_id AND id_immobile = $sim_id";
-                    $result_sim_preferiti = $conn->query($sql_sim_preferiti);
-                    $sim_in_preferiti = ($result_sim_preferiti->num_rows > 0);
-                }
+    <section id="immobili-simili">
+        <div class="container">
+            <h2>Immobili simili che potrebbero interessarti</h2>
+            
+            <?php
+            // Query per trovare immobili simili (stessa categoria e città)
+            $sql_simili = "SELECT i.id, i.nome, i.descrizione, i.prezzo, i.metri_quadri, i.stanze, i.bagni, 
+                                  c.nome AS categoria, i.citta, i.provincia, i.immagine, i.stato
+                          FROM immobili i
+                          JOIN categorie c ON i.categoria_id = c.id
+                          WHERE i.stato = 'disponibile' 
+                          AND i.id != $id 
+                          AND (i.categoria_id = {$immobile['categoria_id']} OR i.citta = '{$immobile['citta']}')
+                          LIMIT 3";
+            
+            $result_simili = $conn->query($sql_simili);
+            
+            if ($result_simili->num_rows > 0):
             ?>
-                <div class="immobile-card">
-                    <div class="immobile-img">
-                        <img src="<?php echo $row['immagine']; ?>" alt="<?php echo $row['nome']; ?>">
-                        <div class="categoria-tag"><?php echo isset($categorie_map[$row['categoria']]) ? $categorie_map[$row['categoria']] : $row['categoria']; ?></div>
-                    </div>
-                    <div class="immobile-details">
-                        <h3><?php echo $row['nome']; ?></h3>
-                        <p class="location"><i class="fas fa-map-marker-alt"></i> <?php echo $row['citta']; ?>, <?php echo $row['provincia']; ?></p>
-                        <p class="price"><?php echo number_format($row['prezzo'], 0, ',', '.'); ?> €</p>
-                        <div class="immobile-features">
-                            <span><i class="fas fa-vector-square"></i> <?php echo $row['metri_quadri']; ?> m²</span>
-                            <span><i class="fas fa-door-open"></i> <?php echo $row['stanze']; ?> stanze</span>
-                            <span><i class="fas fa-bath"></i> <?php echo $row['bagni']; ?> bagni</span>
+            <div class="immobili-grid">
+                <?php while($row = $result_simili->fetch_assoc()): 
+                    // Verifica se l'immobile è nei preferiti
+                    $sim_in_preferiti = false;
+                    if (isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente') {
+                        $sim_id = $row['id'];
+                        $user_id = $_SESSION['user_id'];
+                        $sql_sim_preferiti = "SELECT * FROM preferiti WHERE id_utente = $user_id AND id_immobile = $sim_id";
+                        $result_sim_preferiti = $conn->query($sql_sim_preferiti);
+                        $sim_in_preferiti = ($result_sim_preferiti->num_rows > 0);
+                    }
+                ?>
+                    <div class="immobile-card">
+                        <div class="immobile-img">
+                            <img src="<?php echo $row['immagine']; ?>" alt="<?php echo $row['nome']; ?>">
+                            <div class="categoria-tag"><?php echo isset($categorie_map[$row['categoria']]) ? $categorie_map[$row['categoria']] : $row['categoria']; ?></div>
                         </div>
-                        <div class="immobile-actions">
-                            <div class="action-buttons">
-                                <?php if(isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente'): ?>
-                                    <?php if($sim_in_preferiti): ?>
-                                        <a href="remove_preferito.php?id=<?php echo $row['id']; ?>" class="btn-favorite active">
-                                            <i class="fas fa-heart"></i> Nei preferiti
-                                        </a>
-                                    <?php else: ?>
-                                        <a href="add_preferito.php?id=<?php echo $row['id']; ?>" class="btn-favorite">
-                                            <i class="far fa-heart"></i> Aggiungi ai preferiti
+                        <div class="immobile-details">
+                            <h3><?php echo $row['nome']; ?></h3>
+                            <p class="location"><i class="fas fa-map-marker-alt"></i> <?php echo $row['citta']; ?>, <?php echo $row['provincia']; ?></p>
+                            <p class="price"><?php echo number_format($row['prezzo'], 0, ',', '.'); ?> €</p>
+                            <div class="immobile-features">
+                                <span><i class="fas fa-vector-square"></i> <?php echo $row['metri_quadri']; ?> m²</span>
+                                <span><i class="fas fa-door-open"></i> <?php echo $row['stanze']; ?> stanze</span>
+                                <span><i class="fas fa-bath"></i> <?php echo $row['bagni']; ?> bagni</span>
+                            </div>
+                            <div class="immobile-actions">
+                                <div class="action-buttons">
+                                    <?php if(isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente'): ?>
+                                        <?php if($sim_in_preferiti): ?>
+                                            <a href="remove_preferito.php?id=<?php echo $row['id']; ?>" class="btn-favorite active">
+                                                <i class="fas fa-heart"></i> Nei preferiti
+                                            </a>
+                                        <?php else: ?>
+                                            <a href="add_preferito.php?id=<?php echo $row['id']; ?>" class="btn-favorite">
+                                                <i class="far fa-heart"></i> Aggiungi ai preferiti
+                                            </a>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+                                    
+                                    <?php if($row['stato'] == 'disponibile'): ?>
+                                        <a href="<?php echo isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente' ? 'acquista.php?id=' . $row['id'] : 'login_utente.php?redirect=acquista.php?id=' . $row['id']; ?>" class="btn-purchase">
+                                            <i class="fas fa-shopping-cart"></i> Acquista
                                         </a>
                                     <?php endif; ?>
-                                <?php endif; ?>
-                                
-                                <?php if($row['stato'] == 'disponibile'): ?>
-                                    <a href="<?php echo isset($_SESSION['user_id']) && $_SESSION['user_type'] == 'utente' ? 'acquista.php?id=' . $row['id'] : 'login_utente.php?redirect=acquista.php?id=' . $row['id']; ?>" class="btn-purchase">
-                                        <i class="fas fa-shopping-cart"></i> Acquista
-                                    </a>
-                                <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="view-details">
+                                <a href="immobile_dettaglio.php?id=<?php echo $row['id']; ?>" class="btn-details">Visualizza dettagli</a>
                             </div>
                         </div>
-                        <div class="view-details">
-                            <a href="immobile_dettaglio.php?id=<?php echo $row['id']; ?>" class="btn-details">Visualizza dettagli</a>
-                        </div>
                     </div>
-                </div>
-            <?php endwhile; ?>
+                <?php endwhile; ?>
+            </div>
+            <?php else: ?>
+                <p class="no-similar">Non ci sono immobili simili disponibili al momento.</p>
+            <?php endif; ?>
+            
+            <div class="view-all">
+                <a href="immobili.php" class="btn-view-all">Visualizza tutti gli immobili</a>
+            </div>
         </div>
-        <?php else: ?>
-            <p class="no-similar">Non ci sono immobili simili disponibili al momento.</p>
-        <?php endif; ?>
-        
-        <div class="view-all">
-            <a href="immobili.php" class="btn-view-all">Visualizza tutti gli immobili</a>
-        </div>
-    </div>
-</section>
+    </section>
 
     <!-- Footer -->
     <footer>
@@ -381,6 +407,35 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
         </div>
     </footer>
 
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+            crossorigin=""></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Coordinate dell'immobile dal database
+            const lat = <?php echo $immobile['latitudine'] ?: 'null'; ?>;
+            const lng = <?php echo $immobile['longitudine'] ?: 'null'; ?>;
+            
+            // Controlla se le coordinate sono disponibili
+            if (lat !== null && lng !== null) {
+                // Inizializza la mappa
+                const map = L.map('map-container').setView([lat, lng], 15);
+                
+                // Aggiungi il layer di OpenStreetMap
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+                
+                // Aggiungi un marker nella posizione dell'immobile
+                const marker = L.marker([lat, lng]).addTo(map);
+                marker.bindPopup("<strong><?php echo htmlspecialchars($immobile['nome']); ?></strong><br><?php echo htmlspecialchars($immobile['citta'] . ', ' . $immobile['provincia']); ?>").openPopup();
+            } else {
+                // Se le coordinate non sono disponibili, nascondi il div della mappa
+                document.getElementById('map-container').innerHTML = '<div class="no-map-message">La posizione esatta non è disponibile per questo immobile.</div>';
+            }
+        });
+    </script>
 </body>
 </html>
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Mag 17, 2025 alle 17:33
+-- Creato il: Mag 19, 2025 alle 08:04
 -- Versione del server: 10.4.32-MariaDB
 -- Versione PHP: 8.2.12
 
@@ -144,29 +144,30 @@ CREATE TABLE `immobili` (
   `stanze` int(11) NOT NULL,
   `bagni` int(11) NOT NULL,
   `citta` varchar(50) NOT NULL,
-  `provincia` varchar(50) NOT NULL
+  `provincia` varchar(50) NOT NULL,
+  `latitudine` decimal(10,8) DEFAULT NULL,
+  `longitudine` decimal(11,8) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dump dei dati per la tabella `immobili`
 --
 
-INSERT INTO `immobili` (`id`, `nome`, `descrizione`, `prezzo`, `immagine`, `categoria_id`, `agente_id`, `stato`, `data_inserimento`, `metri_quadri`, `stanze`, `bagni`, `citta`, `provincia`) VALUES
-(59, 'Appartamento moderno', 'Appartamento moderno in zona centrale', 320000.00, 'casa1.jpg', 1, 1, '', '2025-04-18 19:27:21', 120, 5, 2, 'Roma', 'RM'),
-(60, 'Villa con giardino', 'Villa spaziosa con giardino privato', 400000.00, 'casa2.jpg', 2, 2, '', '2025-04-18 19:27:21', 180, 6, 3, 'Milano', 'MI'),
-(61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, '', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE'),
-(62, 'Appartamento economico', 'Appartamento economico vicino ai servizi', 95000.00, 'casa4.jpg', 1, 2, '', '2025-04-18 19:27:21', 60, 2, 1, 'Napoli', 'NA'),
-(63, 'Villa bifamiliare', 'Villa grande adatta per due famiglie', 480000.00, 'casa5.jpg', 2, 1, 'venduto', '2025-04-18 19:27:21', 210, 8, 4, 'Verona', 'VR'),
-(64, 'Monolocale centrale', 'Monolocale perfetto per studenti', 85000.00, 'casa6.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 35, 1, 1, 'Pisa', 'PI'),
-(65, 'Appartamento luminoso', 'Luminoso appartamento vicino al centro', 240000.00, 'casa7.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 85, 3, 1, 'Bologna', 'BO'),
-(66, 'Villa esclusiva', 'Villa esclusiva con piscina', 750000.00, 'casa8.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 300, 7, 4, 'Cagliari', 'CA'),
-(67, 'Monolocale turistico', 'Monolocale adatto per turismo', 150000.00, 'casa9.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 40, 1, 1, 'Venezia', 'VE'),
-(68, 'Appartamento signorile', 'Elegante appartamento ristrutturato', 420000.00, 'casa10.jpg', 1, 2, 'disponibile', '2025-04-18 19:27:21', 160, 5, 3, 'Padova', 'PD'),
-(69, 'Villa panoramica', 'Villa con vista panoramica', 620000.00, 'casa11.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 250, 6, 3, 'Trieste', 'TS'),
-(70, 'Monolocale arredato', 'Monolocale arredato ideale per investimento', 90000.00, 'casa12.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 30, 1, 1, 'Firenze', 'FI'),
-(71, 'Appartamento spazioso', 'Appartamento spazioso e confortevole', 280000.00, 'casa13.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 110, 4, 2, 'Bari', 'BA'),
-(72, 'Villa con terreno', 'Villa indipendente con ampio terreno', 520000.00, 'casa14.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 270, 7, 3, 'Modena', 'MO'),
-(73, 'Monolocale centrale', 'Monolocale in posizione centrale', 95000.00, 'casa15.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 40, 1, 1, 'Ancona', 'AN');
+INSERT INTO `immobili` (`id`, `nome`, `descrizione`, `prezzo`, `immagine`, `categoria_id`, `agente_id`, `stato`, `data_inserimento`, `metri_quadri`, `stanze`, `bagni`, `citta`, `provincia`, `latitudine`, `longitudine`) VALUES
+(60, 'Villa con giardino', 'Villa spaziosa con giardino privato', 400000.00, 'casa2.jpg', 2, 2, '', '2025-04-18 19:27:21', 180, 6, 3, 'Milano', 'MI', 45.46421100, 9.19138300),
+(61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, '', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE', 44.40565000, 8.94625600),
+(62, 'Appartamento economico', 'Appartamento economico vicino ai servizi', 95000.00, 'casa4.jpg', 1, 2, '', '2025-04-18 19:27:21', 60, 2, 1, 'Napoli', 'NA', 40.85177500, 14.26812400),
+(63, 'Villa bifamiliare', 'Villa grande adatta per due famiglie', 480000.00, 'casa5.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 210, 8, 4, 'Verona', 'VR', 45.43838400, 10.99162200),
+(64, 'Monolocale centrale', 'Monolocale perfetto per studenti', 85000.00, 'casa6.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 35, 1, 1, 'Pisa', 'PI', 43.71654100, 10.39659700),
+(65, 'Appartamento luminoso', 'Luminoso appartamento vicino al centro', 240000.00, 'casa7.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 85, 3, 1, 'Bologna', 'BO', 44.49488700, 11.34261600),
+(66, 'Villa esclusiva', 'Villa esclusiva con piscina', 750000.00, 'casa8.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 300, 7, 4, 'Cagliari', 'CA', 39.22384100, 9.12166100),
+(67, 'Monolocale turistico', 'Monolocale adatto per turismo', 150000.00, 'casa9.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 40, 1, 1, 'Venezia', 'VE', 45.44084700, 12.31551500),
+(68, 'Appartamento signorile', 'Elegante appartamento ristrutturato', 420000.00, 'casa10.jpg', 1, 2, 'disponibile', '2025-04-18 19:27:21', 160, 5, 3, 'Padova', 'PD', 45.40643500, 11.87676100),
+(69, 'Villa panoramica', 'Villa con vista panoramica', 620000.00, 'casa11.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 250, 6, 3, 'Trieste', 'TS', 45.64952600, 13.77681800),
+(70, 'Monolocale arredato', 'Monolocale arredato ideale per investimento', 90000.00, 'casa12.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 30, 1, 1, 'Firenze', 'FI', 43.76956200, 11.25581400),
+(71, 'Appartamento spazioso', 'Appartamento spazioso e confortevole', 280000.00, 'casa13.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 110, 4, 2, 'Bari', 'BA', 41.11714400, 16.87187100),
+(72, 'Villa con terreno', 'Villa indipendente con ampio terreno', 520000.00, 'casa14.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 270, 7, 3, 'Modena', 'MO', 44.64712800, 10.92522700),
+(73, 'Monolocale centrale', 'Monolocale in posizione centrale', 95000.00, 'casa15.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 40, 1, 1, 'Ancona', 'AN', 43.61582900, 13.51891500);
 
 -- --------------------------------------------------------
 
@@ -366,13 +367,6 @@ ALTER TABLE `immobili`
 ALTER TABLE `preferiti`
   ADD CONSTRAINT `fk_preferiti_immobili` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_preferiti_utenti` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE CASCADE;
-
---
--- Limiti per la tabella `transazioni`
---
-ALTER TABLE `transazioni`
-  ADD CONSTRAINT `transazioni_ibfk_1` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`),
-  ADD CONSTRAINT `transazioni_ibfk_2` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
