@@ -42,8 +42,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             // Controlla se l'email esiste già nella tabella agenti_immobiliari
             $sql = "SELECT id FROM agenti_immobiliari WHERE email = ?";
+
+            //prevengono SQL injection perché separano i dati dalla query SQL.
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $email);
+
+
             $stmt->execute();
             $result = $stmt->get_result();
             
@@ -135,6 +139,12 @@ $conn->close();
             <div class="success-message"><?php echo $success; ?></div>
         <?php endif; ?>
         
+
+
+
+
+        
+        <!-- converte caratteri pericolosi (&lt;, &gt;, &quot;, &#39;) in entità HTML. -->
         <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
             <div class="form-row">
                 <div class="form-group">

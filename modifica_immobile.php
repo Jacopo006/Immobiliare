@@ -20,11 +20,128 @@ if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
 
 $id_immobile = $_GET['id'];
 
+// --- INIZIO IMPLEMENTAZIONE SISTEMA DI LOCK ---
+// Funzione per ottenere un lock sulla risorsa
+function getLock($conn, $immobile_id, $agente_id) {
+    // Verifica se esiste già un lock
+    $check_lock = "SELECT * FROM immobili_locks WHERE immobile_id = ? AND scadenza > NOW()";
+    $stmt = $conn->prepare($check_lock);
+    $stmt->bind_param("i", $immobile_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $lock = $result->fetch_assoc();
+        // Se il lock appartiene all'agente corrente, aggiornalo
+        if ($lock['agente_id'] == $agente_id) {
+            $update_lock = "UPDATE immobili_locks SET scadenza = DATE_ADD(NOW(), INTERVAL 10 MINUTE) WHERE immobile_id = ? AND agente_id = ?";
+            $stmt = $conn->prepare($update_lock);
+            $stmt->bind_param("ii", $immobile_id, $agente_id);
+            $stmt->execute();
+            return true;
+        }
+        // Altrimenti, qualcun altro ha il lock
+        return false;
+    } else {
+        // Nessun lock attivo, crea un nuovo lock
+        $create_lock = "INSERT INTO immobili_locks (immobile_id, agente_id, scadenza) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 10 MINUTE))";
+        $stmt = $conn->prepare($create_lock);
+        $stmt->bind_param("ii", $immobile_id, $agente_id);
+        $stmt->execute();
+        
+        // Verifica che il lock sia stato creato correttamente
+        if ($stmt->affected_rows > 0) {
+            return true;
+        }
+        return false;
+    }
+}
+
+// Funzione per rilasciare un lock
+function releaseLock($conn, $immobile_id, $agente_id) {
+    $release_lock = "DELETE FROM immobili_locks WHERE immobile_id = ? AND agente_id = ?";
+    $stmt = $conn->prepare($release_lock);
+    $stmt->bind_param("ii", $immobile_id, $agente_id);
+    $stmt->execute();
+}
+
+// Funzione per verificare se l'immobile è in fase di acquisto
+function isInAcquisto($conn, $immobile_id) {
+    $check_acquisto = "SELECT COUNT(*) as count FROM acquisti WHERE id_immobile = ? AND stato_pagamento = 'in attesa'";
+    $stmt = $conn->prepare($check_acquisto);
+    $stmt->bind_param("i", $immobile_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    return ($row['count'] > 0);
+}
+
+// Funzione per ottenere info sul lock corrente
+function getLockInfo($conn, $immobile_id) {
+    $get_lock = "SELECT l.*, a.nome, a.cognome FROM immobili_locks l 
+                 JOIN agenti_immobiliari a ON l.agente_id = a.id 
+                 WHERE l.immobile_id = ? AND l.scadenza > NOW()";
+    $stmt = $conn->prepare($get_lock);
+    $stmt->bind_param("i", $immobile_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        return $result->fetch_assoc();
+    }
+    return false;
+}
+
+// Verifica se il lock è stato rilasciato manualmente
+if (isset($_GET['release_lock']) && $_GET['release_lock'] == 1) {
+    releaseLock($conn, $id_immobile, $id_agente);
+    header('Location: dashboard_agente.php');
+    exit();
+}
+
+// Verifica se l'immobile è in fase di acquisto
+$in_acquisto = isInAcquisto($conn, $id_immobile);
+
+// Ottieni un lock sulla risorsa
+$has_lock = getLock($conn, $id_immobile, $id_agente);
+
+// Se non si ottiene il lock, mostra chi lo sta utilizzando
+if (!$has_lock) {
+    $lock_info = getLockInfo($conn, $id_immobile);
+    $lock_message = "";
+    if ($lock_info) {
+        $lock_message = "Questo immobile è attualmente in fase di modifica dall'agente " . 
+                         htmlspecialchars($lock_info['nome'] . " " . $lock_info['cognome']) . 
+                         ". Riprova più tardi o contatta l'agente.";
+    } else {
+        $lock_message = "Impossibile ottenere l'accesso esclusivo all'immobile. Riprova tra qualche istante.";
+    }
+    
+    // Reindirizza alla dashboard con messaggio di errore
+    $_SESSION['lock_error'] = $lock_message;
+    header('Location: dashboard_agente.php?error=locked');
+    exit();
+}
+
+// Se l'immobile è in fase di acquisto, mostra un avviso
+$acquisto_warning = "";
+if ($in_acquisto) {
+    $acquisto_warning = "ATTENZIONE: Questo immobile è attualmente in fase di acquisto da parte di un cliente. 
+                         Le modifiche potrebbero causare incongruenze con la transazione in corso.";
+}
+// --- FINE IMPLEMENTAZIONE SISTEMA DI LOCK ---
+
 // Verifica che l'immobile appartenga all'agente
-$check_query = "SELECT * FROM immobili WHERE id = $id_immobile AND agente_id = $id_agente";
-$check_result = $conn->query($check_query);
+$check_query = "SELECT * FROM immobili WHERE id = ? AND agente_id = ?";
+$stmt = $conn->prepare($check_query);
+$stmt->bind_param("ii", $id_immobile, $id_agente);
+$stmt->execute();
+$check_result = $stmt->get_result();
 
 if ($check_result->num_rows == 0) {
+    // Rilascia il lock prima di reindirizzare
+    releaseLock($conn, $id_immobile, $id_agente);
     header('Location: dashboard_agente.php?error=unauthorized');
     exit();
 }
@@ -42,25 +159,50 @@ while ($cat = $result_categorie->fetch_assoc()) {
 
 // Gestione dell'eliminazione dell'immobile
 if (isset($_POST['action']) && $_POST['action'] == 'elimina') {
-    // Prima controlla se ci sono transazioni o preferiti legati a questo immobile
-    $check_transazioni = "SELECT COUNT(*) as num FROM transazioni WHERE id_immobile = $id_immobile";
-    $result_transazioni = $conn->query($check_transazioni);
+    // Controlla se ci sono transazioni o acquisti in corso
+    $check_transazioni = "SELECT COUNT(*) as num FROM transazioni WHERE id_immobile = ?";
+    $stmt = $conn->prepare($check_transazioni);
+    $stmt->bind_param("i", $id_immobile);
+    $stmt->execute();
+    $result_transazioni = $stmt->get_result();
     $transazioni = $result_transazioni->fetch_assoc();
     
-    $check_preferiti = "SELECT COUNT(*) as num FROM preferiti WHERE id_immobile = $id_immobile";
-    $result_preferiti = $conn->query($check_preferiti);
+    $check_acquisti = "SELECT COUNT(*) as num FROM acquisti WHERE id_immobile = ?";
+    $stmt = $conn->prepare($check_acquisti);
+    $stmt->bind_param("i", $id_immobile);
+    $stmt->execute();
+    $result_acquisti = $stmt->get_result();
+    $acquisti = $result_acquisti->fetch_assoc();
+    
+    $check_preferiti = "SELECT COUNT(*) as num FROM preferiti WHERE id_immobile = ?";
+    $stmt = $conn->prepare($check_preferiti);
+    $stmt->bind_param("i", $id_immobile);
+    $stmt->execute();
+    $result_preferiti = $stmt->get_result();
     $preferiti = $result_preferiti->fetch_assoc();
     
-    if ($transazioni['num'] > 0) {
-        $error = "Impossibile eliminare l'immobile perché esistono delle transazioni associate.";
+    if ($transazioni['num'] > 0 || $acquisti['num'] > 0) {
+        $error = "Impossibile eliminare l'immobile perché esistono delle transazioni o acquisti associati.";
     } else {
         // Elimina prima i preferiti associati
-        $delete_preferiti = "DELETE FROM preferiti WHERE id_immobile = $id_immobile";
-        $conn->query($delete_preferiti);
+        $delete_preferiti = "DELETE FROM preferiti WHERE id_immobile = ?";
+        $stmt = $conn->prepare($delete_preferiti);
+        $stmt->bind_param("i", $id_immobile);
+        $stmt->execute();
         
-        // Poi elimina l'immobile
-        $delete_query = "DELETE FROM immobili WHERE id = $id_immobile AND agente_id = $id_agente";
-        if ($conn->query($delete_query) === TRUE) {
+        // Poi elimina i lock associati
+        $delete_locks = "DELETE FROM immobili_locks WHERE immobile_id = ?";
+        $stmt = $conn->prepare($delete_locks);
+        $stmt->bind_param("i", $id_immobile);
+        $stmt->execute();
+        
+        // Infine elimina l'immobile
+        $delete_query = "DELETE FROM immobili WHERE id = ? AND agente_id = ?";
+        $stmt = $conn->prepare($delete_query);
+        $stmt->bind_param("ii", $id_immobile, $id_agente);
+        $stmt->execute();
+        
+        if ($stmt->affected_rows > 0) {
             // Redirect alla dashboard con messaggio di successo
             header('Location: dashboard_agente.php?msg=eliminato');
             exit();
@@ -73,12 +215,33 @@ if (isset($_POST['action']) && $_POST['action'] == 'elimina') {
 // Gestione del cambio stato dell'immobile
 if (isset($_POST['action']) && $_POST['action'] == 'cambio_stato') {
     $nuovo_stato = $conn->real_escape_string($_POST['nuovo_stato']);
-    $update_stato_query = "UPDATE immobili SET stato = '$nuovo_stato' WHERE id = $id_immobile AND agente_id = $id_agente";
     
-    if ($conn->query($update_stato_query) === TRUE) {
-        $msg = "Stato dell'immobile aggiornato con successo!";
+    // Verifica se ci sono acquisti in corso
+    if ($in_acquisto && $nuovo_stato == 'venduto') {
+        $msg = "Stato aggiornato a 'venduto'. Le transazioni in corso verranno completate automaticamente.";
+        
+        // Aggiorna le transazioni in corso
+        $update_acquisti = "UPDATE acquisti SET stato_pagamento = 'completato' WHERE id_immobile = ? AND stato_pagamento = 'in attesa'";
+        $stmt = $conn->prepare($update_acquisti);
+        $stmt->bind_param("i", $id_immobile);
+        $stmt->execute();
+    }
+    
+    // Aggiorna lo stato dell'immobile
+    $update_stato_query = "UPDATE immobili SET stato = ? WHERE id = ? AND agente_id = ?";
+    $stmt = $conn->prepare($update_stato_query);
+    $stmt->bind_param("sii", $nuovo_stato, $id_immobile, $id_agente);
+    $stmt->execute();
+    
+    if ($stmt->affected_rows > 0) {
+        if (empty($msg)) {
+            $msg = "Stato dell'immobile aggiornato con successo!";
+        }
         // Aggiorna i dati dell'immobile nella variabile
-        $check_result = $conn->query($check_query);
+        $stmt = $conn->prepare($check_query);
+        $stmt->bind_param("ii", $id_immobile, $id_agente);
+        $stmt->execute();
+        $check_result = $stmt->get_result();
         $immobile = $check_result->fetch_assoc();
     } else {
         $error = "Errore durante l'aggiornamento dello stato: " . $conn->error;
@@ -99,59 +262,82 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['action'])) {
     $provincia = $conn->real_escape_string($_POST['provincia']);
     $descrizione = $conn->real_escape_string($_POST['descrizione']);
     
-    // Prepara la query di aggiornamento
-    $update_query = "UPDATE immobili SET 
-                    nome = '$nome',
-                    categoria_id = $categoria_id,
-                    prezzo = $prezzo,
-                    stato = '$stato',
-                    metri_quadri = $metri_quadri,
-                    stanze = $stanze,
-                    bagni = $bagni,
-                    citta = '$citta',
-                    provincia = '$provincia',
-                    descrizione = '$descrizione'";
-    
-    // Gestione upload nuova immagine
-    if (isset($_FILES['immagine']) && $_FILES['immagine']['size'] > 0) {
-        $target_dir = "uploads/immobili/";
-        $file_extension = strtolower(pathinfo($_FILES["immagine"]["name"], PATHINFO_EXTENSION));
-        $new_filename = "immobile_" . $id_immobile . "_" . time() . "." . $file_extension;
-        $target_file = $target_dir . $new_filename;
+    // Verifica se ci sono acquisti in corso e il prezzo è stato modificato
+    if ($in_acquisto && $prezzo != $immobile['prezzo']) {
+        $error = "Attenzione: questo immobile ha un acquisto in corso. Non è possibile modificare il prezzo in questa fase.";
+    } else {
+        // Prepara la query di aggiornamento
+        $update_query = "UPDATE immobili SET 
+                        nome = ?,
+                        categoria_id = ?,
+                        prezzo = ?,
+                        stato = ?,
+                        metri_quadri = ?,
+                        stanze = ?,
+                        bagni = ?,
+                        citta = ?,
+                        provincia = ?,
+                        descrizione = ?";
         
-        // Controlla estensione
-        $allowed_extensions = array("jpg", "jpeg", "png", "gif");
-        if (!in_array($file_extension, $allowed_extensions)) {
-            $error = "Solo file JPG, JPEG, PNG e GIF sono consentiti.";
-        } 
-        // Controlla dimensione (max 5MB)
-        else if ($_FILES["immagine"]["size"] > 5000000) {
-            $error = "Il file è troppo grande. La dimensione massima è 5MB.";
-        } 
-        // Se tutto è ok, carica il file
-        else if (move_uploaded_file($_FILES["immagine"]["tmp_name"], $target_file)) {
-            // Aggiorna il campo immagine nella query
-            $update_query .= ", immagine = '$new_filename'";
-        } else {
-            $error = "Si è verificato un errore durante il caricamento dell'immagine.";
+        $bind_types = "sidsiiisss";
+        $bind_params = [$nome, $categoria_id, $prezzo, $stato, $metri_quadri, $stanze, $bagni, $citta, $provincia, $descrizione];
+        
+        // Gestione upload nuova immagine
+        if (isset($_FILES['immagine']) && $_FILES['immagine']['size'] > 0) {
+            $target_dir = "uploads/immobili/";
+            $file_extension = strtolower(pathinfo($_FILES["immagine"]["name"], PATHINFO_EXTENSION));
+            $new_filename = "immobile_" . $id_immobile . "_" . time() . "." . $file_extension;
+            $target_file = $target_dir . $new_filename;
+            
+            // Controlla estensione
+            $allowed_extensions = array("jpg", "jpeg", "png", "gif");
+            if (!in_array($file_extension, $allowed_extensions)) {
+                $error = "Solo file JPG, JPEG, PNG e GIF sono consentiti.";
+            } 
+            // Controlla dimensione (max 5MB)
+            else if ($_FILES["immagine"]["size"] > 5000000) {
+                $error = "Il file è troppo grande. La dimensione massima è 5MB.";
+            } 
+            // Se tutto è ok, carica il file
+            else if (move_uploaded_file($_FILES["immagine"]["tmp_name"], $target_file)) {
+                // Aggiorna il campo immagine nella query
+                $update_query .= ", immagine = ?";
+                $bind_types .= "s";
+                $bind_params[] = $new_filename;
+            } else {
+                $error = "Si è verificato un errore durante il caricamento dell'immagine.";
+            }
         }
-    }
-    
-    // Completa la query con la condizione WHERE
-    $update_query .= " WHERE id = $id_immobile AND agente_id = $id_agente";
-    
-    // Esegui la query se non ci sono errori
-    if (empty($error)) {
-        if ($conn->query($update_query) === TRUE) {
-            $msg = "Immobile aggiornato con successo!";
-            // Aggiorna i dati dell'immobile nella variabile
-            $check_result = $conn->query($check_query);
-            $immobile = $check_result->fetch_assoc();
-        } else {
-            $error = "Errore durante l'aggiornamento: " . $conn->error;
+        
+        // Completa la query con la condizione WHERE
+        $update_query .= " WHERE id = ? AND agente_id = ?";
+        $bind_types .= "ii";
+        $bind_params[] = $id_immobile;
+        $bind_params[] = $id_agente;
+        
+        // Esegui la query se non ci sono errori
+        if (empty($error)) {
+            $stmt = $conn->prepare($update_query);
+            $stmt->bind_param($bind_types, ...$bind_params);
+            $stmt->execute();
+            
+            if ($stmt->affected_rows > 0) {
+                $msg = "Immobile aggiornato con successo!";
+                // Aggiorna i dati dell'immobile nella variabile
+                $stmt = $conn->prepare($check_query);
+                $stmt->bind_param("ii", $id_immobile, $id_agente);
+                $stmt->execute();
+                $check_result = $stmt->get_result();
+                $immobile = $check_result->fetch_assoc();
+            } else {
+                $error = "Nessuna modifica effettuata o errore durante l'aggiornamento: " . $conn->error;
+            }
         }
     }
 }
+
+// Quando la pagina viene chiusa o si naviga altrove, il lock verrà rilasciato automaticamente dopo la scadenza
+// Ma è meglio anche rilasciarlo esplicitamente quando si esce dalla pagina
 ?>
 
 <!DOCTYPE html>

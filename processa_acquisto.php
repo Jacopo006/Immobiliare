@@ -43,6 +43,13 @@ mysqli_query($conn, "BEGIN");
 $transaction_success = true;
 $error_message = '';
 
+
+
+
+
+
+
+
 try {
     // 1. Verifica se l'immobile è ancora disponibile
     $query_check = "SELECT * FROM immobili WHERE id = ? AND stato = 'disponibile' FOR UPDATE";
@@ -53,7 +60,6 @@ try {
     if ($result_check->num_rows == 0) {
         throw new Exception("L'immobile selezionato non è più disponibile per l'acquisto.");
     }
-
     // 2. Inserisci il record di acquisto
     $query_insert = "INSERT INTO acquisti (id_immobile, id_utente, acconto, metodo_pagamento, tipo_acquisto, stato_pagamento, payment_id, note, data_acquisto) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, CURRENT_TIMESTAMP)";
     $stmt_insert = $conn->prepare($query_insert);

@@ -11,17 +11,23 @@ if(isset($_SESSION['user_id'])) {
 include 'config.php'; // Include il file di connessione al database
 $error = ''; // Variabile per memorizzare eventuali messaggi di errore
 
-// Verifica se il form è stato inviato
+
+
+
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     // Ottieni i dati dal form
     $email = trim($_POST['email']);
     $password = $_POST['password'];
+
+
+
+
     
-    // Validazione basilare
     if(empty($email) || empty($password)) {
         $error = "Inserisci email e password";
     } else {
-        // Verifica se l'utente esiste nel database (cerchiamo prima tra gli utenti normali)
+        // Verifica se l'utente esiste nel database 
         $sql = "SELECT id, nome, cognome, email, password FROM utenti WHERE email = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("s", $email);
@@ -48,11 +54,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         } else {
             // Verifica se è un agente immobiliare
+            
+            
+            
+            
             $sql = "SELECT id, nome, cognome, email, password FROM agenti_immobiliari WHERE email = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $email);
             $stmt->execute();
             $result = $stmt->get_result();
+
+
+
+
+
             
             if ($result->num_rows == 1) {
                 // Agente trovato
@@ -123,13 +138,17 @@ $conn->close();
         <?php if(!empty($error)): ?>
             <div class="error-message"><?php echo $error; ?></div>
         <?php endif; ?>
-        
+
+
+
+        <!---->
         <form method="POST" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
             <div class="form-group">
                 <label for="email"><i class="fas fa-envelope"></i> Email</label>
                 <input type="email" id="email" name="email" required>
             </div>
-            
+        <!---->
+
             <div class="form-group">
                 <label for="password"><i class="fas fa-lock"></i> Password</label>
                 <input type="password" id="password" name="password" required>

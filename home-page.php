@@ -56,7 +56,7 @@ $result_agenti = $conn->query($sql_agenti);
     <!-- Icona casetta cliccabile intelligente: porta a login_agente.php o profilo-agente.php -->
         <?php 
         // Link intelligente: se è un agente loggato, va al suo profilo, altrimenti alla pagina di login degli agenti
-        $agent_link = (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente') ? 'profilo-agente.php' : 'login_agente.php';
+        $agent_link = (isset($_SESSION['user_id']) && isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'agente') ? 'dashboard_agente.php' : 'login_agente.php';
         ?>
         <a href="<?php echo $agent_link; ?>" style="text-decoration:none;">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="#3498db" viewBox="0 0 24 24">
