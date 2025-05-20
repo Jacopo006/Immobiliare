@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Mag 19, 2025 alle 08:04
+-- Creato il: Mag 20, 2025 alle 09:22
 -- Versione del server: 10.4.32-MariaDB
 -- Versione PHP: 8.2.12
 
@@ -51,7 +51,8 @@ CREATE TABLE `acquisti` (
 --
 
 INSERT INTO `acquisti` (`id`, `id_immobile`, `id_utente`, `acconto`, `metodo_pagamento`, `piano_rate`, `importo_totale`, `tipo_acquisto`, `modalita_pagamento`, `stato_pagamento`, `payment_id`, `note`, `data_acquisto`) VALUES
-(7, 63, 3, 48000.00, '0', NULL, 480000.00, 'acquisto', 'unica_soluzione', 'in attesa', NULL, 'fgfdgfdgd', '2025-05-17 15:32:54');
+(8, 66, 3, 75000.00, '0', 48, 829054.56, 'acquisto', 'rate', 'in attesa', NULL, '', '2025-05-19 06:44:15'),
+(9, 63, 3, 48000.00, '0', 12, 493099.08, 'acquisto', 'rate', 'in attesa', NULL, '', '2025-05-19 06:58:49');
 
 -- --------------------------------------------------------
 
@@ -155,12 +156,12 @@ CREATE TABLE `immobili` (
 
 INSERT INTO `immobili` (`id`, `nome`, `descrizione`, `prezzo`, `immagine`, `categoria_id`, `agente_id`, `stato`, `data_inserimento`, `metri_quadri`, `stanze`, `bagni`, `citta`, `provincia`, `latitudine`, `longitudine`) VALUES
 (60, 'Villa con giardino', 'Villa spaziosa con giardino privato', 400000.00, 'casa2.jpg', 2, 2, '', '2025-04-18 19:27:21', 180, 6, 3, 'Milano', 'MI', 45.46421100, 9.19138300),
-(61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, '', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE', 44.40565000, 8.94625600),
+(61, 'Monolocale vista mare', 'Monolocale con vista mare e terrazzo', 120000.00, 'casa3.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 45, 1, 1, 'Genova', 'GE', 44.40565000, 8.94625600),
 (62, 'Appartamento economico', 'Appartamento economico vicino ai servizi', 95000.00, 'casa4.jpg', 1, 2, '', '2025-04-18 19:27:21', 60, 2, 1, 'Napoli', 'NA', 40.85177500, 14.26812400),
 (63, 'Villa bifamiliare', 'Villa grande adatta per due famiglie', 480000.00, 'casa5.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 210, 8, 4, 'Verona', 'VR', 45.43838400, 10.99162200),
 (64, 'Monolocale centrale', 'Monolocale perfetto per studenti', 85000.00, 'casa6.jpg', 3, 2, 'disponibile', '2025-04-18 19:27:21', 35, 1, 1, 'Pisa', 'PI', 43.71654100, 10.39659700),
 (65, 'Appartamento luminoso', 'Luminoso appartamento vicino al centro', 240000.00, 'casa7.jpg', 1, 1, 'disponibile', '2025-04-18 19:27:21', 85, 3, 1, 'Bologna', 'BO', 44.49488700, 11.34261600),
-(66, 'Villa esclusiva', 'Villa esclusiva con piscina', 750000.00, 'casa8.jpg', 2, 2, 'disponibile', '2025-04-18 19:27:21', 300, 7, 4, 'Cagliari', 'CA', 39.22384100, 9.12166100),
+(66, 'Villa esclusiva', 'Villa esclusiva con piscina', 750000.00, 'casa8.jpg', 2, 2, 'venduto', '2025-04-18 19:27:21', 300, 7, 4, 'Cagliari', 'CA', 39.22384100, 9.12166100),
 (67, 'Monolocale turistico', 'Monolocale adatto per turismo', 150000.00, 'casa9.jpg', 3, 1, 'disponibile', '2025-04-18 19:27:21', 40, 1, 1, 'Venezia', 'VE', 45.44084700, 12.31551500),
 (68, 'Appartamento signorile', 'Elegante appartamento ristrutturato', 420000.00, 'casa10.jpg', 1, 2, 'disponibile', '2025-04-18 19:27:21', 160, 5, 3, 'Padova', 'PD', 45.40643500, 11.87676100),
 (69, 'Villa panoramica', 'Villa con vista panoramica', 620000.00, 'casa11.jpg', 2, 1, 'disponibile', '2025-04-18 19:27:21', 250, 6, 3, 'Trieste', 'TS', 45.64952600, 13.77681800),
@@ -199,16 +200,6 @@ CREATE TABLE `transazioni` (
   `tipo` enum('acquisto','affitto') DEFAULT 'acquisto'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dump dei dati per la tabella `transazioni`
---
-
-INSERT INTO `transazioni` (`id`, `id_utente`, `id_immobile`, `data_transazione`, `importo`, `tipo`) VALUES
-(2, 3, 59, '2025-05-10 11:31:30', 32000.00, 'acquisto'),
-(3, 3, 60, '2025-05-10 11:33:23', 40000.00, 'acquisto'),
-(4, 3, 61, '2025-05-10 11:37:02', 12000.00, 'acquisto'),
-(5, 3, 62, '2025-05-17 14:48:13', 9500.00, 'acquisto');
-
 -- --------------------------------------------------------
 
 --
@@ -235,7 +226,7 @@ CREATE TABLE `utenti` (
 INSERT INTO `utenti` (`id`, `nome`, `cognome`, `email`, `password`, `data_registrazione`, `telefono`, `indirizzo`, `stato`) VALUES
 (1, 'Mario', 'Rossi', 'mario.rossi@example.com', 'password123', '2025-04-17 08:08:16', '3331234567', 'Via Roma, 10, Milano', 'attivo'),
 (2, 'Giulia', 'Verdi', 'giulia.verdi@example.com', 'password456', '2025-04-17 08:08:16', '3339876543', 'Via Garibaldi, 20, Roma', 'attivo'),
-(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$us589PSDAhBq4g.si4VVp.AcMramX5HtnJNevmzxryHEkiAjvFhwi', '2025-04-17 08:19:11', '3518966972', NULL, 'attivo'),
+(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$drZbgnC96mYteAgPi74md.QMMOMvyzrix9m9quozskWrrORnsrfkm', '2025-04-17 08:19:11', '3518966972', 'Via Fermi 8', 'attivo'),
 (4, 'Paolo', 'Merisio', 'mersio@gmail.com', '$2y$10$ogn.m7vh8bnB9B4pPvICD.JNoSkePTQ.89Lh/kLFYVRArhHtWx/3S', '2025-05-06 07:56:52', '325346457476567', NULL, 'attivo');
 
 --
@@ -306,7 +297,7 @@ ALTER TABLE `utenti`
 -- AUTO_INCREMENT per la tabella `acquisti`
 --
 ALTER TABLE `acquisti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT per la tabella `agenti_immobiliari`
@@ -330,13 +321,13 @@ ALTER TABLE `contatti`
 -- AUTO_INCREMENT per la tabella `immobili`
 --
 ALTER TABLE `immobili`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
 -- AUTO_INCREMENT per la tabella `preferiti`
 --
 ALTER TABLE `preferiti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT per la tabella `transazioni`
