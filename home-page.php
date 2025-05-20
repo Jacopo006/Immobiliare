@@ -75,7 +75,8 @@ $result_agenti = $conn->query($sql_agenti);
                     <ul class="dropdown-menu">
                         <?php if(isset($_SESSION['user_type']) && $_SESSION['user_type'] == 'utente'): ?>
                             <li><a href="profilo-utente.php"><i class="fas fa-id-card"></i> Profilo</a></li>
-                            <li><a href="preferiti.php"><i class="fas fa-heart"></i> Preferiti</a></li>
+                            <li><a href="miei_acquisti.php"><i class="fas fa-shopping-cart"></i> I miei acquisti</a></li>
+                            
                         <?php endif; ?>
                         <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                     </ul>

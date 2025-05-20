@@ -83,26 +83,7 @@ $success_message = isset($_SESSION['success_message']) ? $_SESSION['success_mess
 // Pulisci i messaggi dalla sessione dopo averli recuperati
 unset($_SESSION['error_message']);
 unset($_SESSION['success_message']);
-                        ?>
-                        <tr>
-                            <td>Rata <?php echo $count; ?></td>
-                            <td><?php echo number_format($rata['importo'], 2, ',', '.'); ?> €</td>
-                            <td><?php echo $data_scadenza_formatted; ?></td>
-                            <td><span class="payment-status <?php echo $status_class; ?>"><?php echo $status_text; ?></span></td>
-                            <td><?php echo $data_pagamento; ?></td>
-                            <td class="payment-actions">
-                                <?php if($rata['stato'] == 'pending'): ?>
-                                    <a href="processa_pagamento.php?id_rata=<?php echo $rata['id']; ?>&id_acquisto=<?php echo $id_acquisto; ?>" class="action-btn pay-now">
-                                        <i class="fas fa-credit-card"></i> Paga ora
-                                    </a>
-                                <?php elseif($rata['stato'] == 'paid'): ?>
-                                    <a href="ricevuta_pagamento.php?id_rata=<?php echo $rata['id']; ?>" class="action-btn">
-                                        <i class="fas fa-file-invoice"></i> Ricevuta
-                                    </a>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                        <?php $count++; endwhile; ?>
+?>
 
 <!DOCTYPE html>
 <html lang="it">
@@ -115,464 +96,8 @@ unset($_SESSION['success_message']);
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .breadcrumb {
-            background-color: #f8f9fa;
-            padding: 15px 0;
-            margin-bottom: 30px;
-        }
-        
-        .breadcrumb a {
-            color: #3498db;
-            text-decoration: none;
-        }
-        
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-        
-        .breadcrumb span {
-            color: #6c757d;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        
-        .page-header h1 {
-            color: #333;
-            margin: 0;
-            font-size: 28px;
-        }
-        
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-        }
-        
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .acquisto-summary {
-            display: flex;
-            gap: 30px;
-            margin-bottom: 40px;
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-        
-        .acquisto-image {
-            flex: 0 0 300px;
-            height: 250px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .acquisto-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .acquisto-details {
-            flex: 1;
-            padding: 20px;
-        }
-        
-        .acquisto-title {
-            font-size: 24px;
-            font-weight: 600;
-            margin: 0 0 10px 0;
-            color: #333;
-        }
-        
-        .acquisto-category {
-            display: inline-block;
-            background-color: #f8f9fa;
-            padding: 3px 10px;
-            border-radius: 20px;
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 15px;
-        }
-        
-        .acquisto-location {
-            display: flex;
-            align-items: center;
-            color: #6c757d;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        
-        .acquisto-location i {
-            margin-right: 5px;
-            color: #3498db;
-        }
-        
-        .acquisto-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px 30px;
-            margin-bottom: 20px;
-        }
-        
-        .info-item {
-            flex: 0 0 calc(50% - 15px);
-        }
-        
-        .info-label {
-            font-size: 14px;
-            color: #6c757d;
-            margin-bottom: 5px;
-        }
-        
-        .info-value {
-            font-size: 16px;
-            font-weight: 500;
-            color: #333;
-        }
-        
-        .progress-section {
-            margin-bottom: 20px;
-        }
-        
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-        
-        .progress-bar {
-            height: 10px;
-            background-color: #e9ecef;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background-color: #3498db;
-            transition: width 0.3s ease;
-        }
-        
-        .summary-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            background-color: #3498db;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-        
-        .btn-outline {
-            border: 1px solid #3498db;
-            color: #3498db;
-            background-color: transparent;
-        }
-        
-        .btn-outline:hover {
-            background-color: #f0f7fc;
-        }
-        
-        .section-title {
-            font-size: 22px;
-            font-weight: 600;
-            color: #333;
-            margin: 0 0 20px 0;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f8f9fa;
-        }
-        
-        .payment-plan {
-            margin-bottom: 40px;
-        }
-        
-        .no-payments {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .no-payments i {
-            font-size: 36px;
-            color: #6c757d;
-            margin-bottom: 10px;
-        }
-        
-        .no-payments p {
-            color: #6c757d;
-            margin-bottom: 15px;
-        }
-        
-        .payment-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        
-        .payment-table th,
-        .payment-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .payment-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .payment-table tr:last-child td {
-            border-bottom: none;
-        }
-        
-        .payment-table tbody tr:hover {
-            background-color: #f0f7fc;
-        }
-        
-        .payment-status {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .status-paid {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        
-        .status-pending {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-missed {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-        
-        .status-upcoming {
-            background-color: #e2e3e5;
-            color: #383d41;
-        }
-        
-        .payment-actions {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .action-btn {
-            padding: 5px 10px;
-            border-radius: 5px;
-            background-color: #f8f9fa;
-            color: #6c757d;
-            text-decoration: none;
-            font-size: 13px;
-            transition: all 0.2s ease;
-        }
-        
-        .action-btn:hover {
-            background-color: #e9ecef;
-        }
-        
-        .action-btn.pay-now {
-            background-color: #3498db;
-            color: white;
-        }
-        
-        .action-btn.pay-now:hover {
-            background-color: #2980b9;
-        }
-        
-        .payment-summary {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 40px;
-        }
-        
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .summary-row:last-child {
-            border-bottom: none;
-            font-weight: 600;
-        }
-        
-        .download-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .next-payment {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            padding: 20px;
-            margin-bottom: 40px;
-        }
-        
-        .next-payment-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .next-payment-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin: 0;
-        }
-        
-        .next-payment-status {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .next-payment-details {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-        }
-        
-        .next-payment-amount {
-            font-size: 24px;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .next-payment-date {
-            color: #6c757d;
-        }
-        
-        .payment-method-radio {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .radio-option {
-            flex: 1;
-            padding: 15px;
-            border: 1px solid #e9ecef;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .radio-option:hover {
-            background-color: #f8f9fa;
-        }
-        
-        .radio-option.selected {
-            border-color: #3498db;
-            background-color: #f0f7fc;
-        }
-        
-        .radio-option input {
-            margin-right: 5px;
-        }
-        
-        .payment-button {
-            width: 100%;
-            padding: 12px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .payment-button:hover {
-            background-color: #2980b9;
-        }
-        
-        .payment-button:disabled {
-            background-color: #6c757d;
-            cursor: not-allowed;
-        }
-        
-        @media (max-width: 768px) {
-            .acquisto-summary {
-                flex-direction: column;
-            }
-            
-            .acquisto-image {
-                flex: 0 0 200px;
-            }
-            
-            .info-item {
-                flex: 0 0 100%;
-            }
-            
-            .summary-actions {
-                flex-direction: column;
-            }
-            
-            .btn {
-                width: 100%;
-                text-align: center;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="piano_pagamenti.css">
+
 </head>
 <body>
     <!-- Header con menu dinamico basato sul login -->
@@ -592,10 +117,8 @@ unset($_SESSION['success_message']);
                     <li class="user-menu">
                         <a href="#"><i class="fas fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name']); ?> <i class="fas fa-caret-down"></i></a>
                         <ul class="dropdown-menu">
-                            <li><a href="profile.php"><i class="fas fa-id-card"></i> Profilo</a></li>
+                            <li><a href="profilo-utente.php"><i class="fas fa-id-card"></i> Profilo</a></li>
                             <?php if($_SESSION['user_type'] == 'utente'): ?>
-                                <li><a href="preferiti.php"><i class="fas fa-heart"></i> Preferiti</a></li>
-                                <li><a href="miei_acquisti.php"><i class="fas fa-shopping-cart"></i> I miei acquisti</a></li>
                             <?php endif; ?>
                             <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                         </ul>
@@ -640,9 +163,12 @@ unset($_SESSION['success_message']);
         
         <!-- Riepilogo dell'acquisto -->
         <div class="acquisto-summary">
-            <div class="acquisto-image">
-                <img src="images/<?php echo $acquisto['immagine']; ?>" alt="<?php echo $acquisto['immobile_nome']; ?>">
-            </div>
+        <div class="acquisto-image">
+        <img src="<?php echo $acquisto['immagine']; ?>" alt="<?php echo $acquisto['immobile_nome']; ?>">
+                        <div class="categoria-tag"><?php echo isset($categorie_map[$acquisto['categoria_nome']]) ? 
+                                $categorie_map[$acquisto['categoria_nome']] : 
+                                $acquisto['categoria_nome']; ?></div>
+                    </div>
             <div class="acquisto-details">
                 <h2 class="acquisto-title"><?php echo $acquisto['immobile_nome']; ?></h2>
                 <span class="acquisto-category">
@@ -840,26 +366,26 @@ unset($_SESSION['success_message']);
                             // Calcolo della data di scadenza
                             $data_scadenza_obj = new DateTime($rata['data_scadenza']);
                             $data_scadenza_formatted = $data_scadenza_obj->format('d/m/Y');
-                            ?>
+                        ?>
                         <tr>
-    <td>Rata <?php echo $count; ?></td>
-    <td><?php echo number_format($rata['importo'], 2, ',', '.'); ?> €</td>
-    <td><?php echo $data_scadenza_formatted; ?></td>
-    <td><span class="payment-status <?php echo $status_class; ?>"><?php echo $status_text; ?></span></td>
-    <td><?php echo $data_pagamento; ?></td>
-    <td class="payment-actions">
-        <?php if($rata['stato'] == 'pending'): ?>
-            <a href="processa_pagamento.php?id_rata=<?php echo $rata['id']; ?>&id_acquisto=<?php echo $id_acquisto; ?>" class="action-btn pay-now">
-                <i class="fas fa-credit-card"></i> Paga ora
-            </a>
-        <?php elseif($rata['stato'] == 'paid'): ?>
-            <a href="ricevuta_pagamento.php?id_rata=<?php echo $rata['id']; ?>" class="action-btn">
-                <i class="fas fa-file-invoice"></i> Ricevuta
-            </a>
-        <?php endif; ?>
-    </td>
-</tr>
-<?php $count++; endwhile; ?>
+                            <td>Rata <?php echo $count; ?></td>
+                            <td><?php echo number_format($rata['importo'], 2, ',', '.'); ?> €</td>
+                            <td><?php echo $data_scadenza_formatted; ?></td>
+                            <td><span class="payment-status <?php echo $status_class; ?>"><?php echo $status_text; ?></span></td>
+                            <td><?php echo $data_pagamento; ?></td>
+                            <td class="payment-actions">
+                                <?php if($rata['stato'] == 'pending'): ?>
+                                    <a href="processa_pagamento.php?id_rata=<?php echo $rata['id']; ?>&id_acquisto=<?php echo $id_acquisto; ?>" class="action-btn pay-now">
+                                        <i class="fas fa-credit-card"></i> Paga ora
+                                    </a>
+                                <?php elseif($rata['stato'] == 'paid'): ?>
+                                    <a href="ricevuta_pagamento.php?id_rata=<?php echo $rata['id']; ?>" class="action-btn">
+                                        <i class="fas fa-file-invoice"></i> Ricevuta
+                                    </a>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php $count++; endwhile; ?>
                     </tbody>
                 </table>
             <?php else: ?>
@@ -970,6 +496,3 @@ unset($_SESSION['success_message']);
     </script>
 </body>
 </html>
-                            
-
-                            

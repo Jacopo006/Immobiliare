@@ -315,6 +315,30 @@ unset($_SESSION['success_message']);
         .btn-primary:hover {
             background-color: #2980b9;
         }
+            .acquisto-image {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+    .acquisto-image img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .categoria-tag {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background-color: rgba(255, 87, 34, 0.9); /* Arancione trasparente */
+        color: white;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
         
         @media (max-width: 768px) {
             .acquisti-grid {
@@ -352,8 +376,7 @@ unset($_SESSION['success_message']);
                         <ul class="dropdown-menu">
                             <li><a href="profilo-utente.php"><i class="fas fa-id-card"></i> Profilo</a></li>
                             <?php if($_SESSION['user_type'] == 'utente'): ?>
-                                <li><a href="preferiti.php"><i class="fas fa-heart"></i> Preferiti</a></li>
-                                <li><a href="miei_acquisti.php"><i class="fas fa-shopping-cart"></i> I miei acquisti</a></li>
+                               
                             <?php endif; ?>
                             <li><a href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                         </ul>
@@ -409,8 +432,8 @@ unset($_SESSION['success_message']);
                 ?>
                 <div class="acquisto-card">
                     <div class="acquisto-image">
-                        <img src="images/<?php echo $acquisto['immagine']; ?>" alt="<?php echo $acquisto['immobile_nome']; ?>">
-                        
+                    <img src="<?php echo htmlspecialchars($acquisto['immagine']); ?>" alt="...">
+
                         <?php if($acquisto['stato_pagamento'] == 'pending'): ?>
                             <span class="status-badge status-pending">In attesa</span>
                         <?php elseif($acquisto['stato_pagamento'] == 'completed'): ?>
