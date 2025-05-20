@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Mag 20, 2025 alle 09:22
+-- Creato il: Mag 20, 2025 alle 16:09
 -- Versione del server: 10.4.32-MariaDB
--- Versione PHP: 8.2.12
+-- Versione PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -105,6 +105,34 @@ INSERT INTO `categorie` (`id`, `nome`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Struttura della tabella `chat_messaggi`
+--
+
+DROP TABLE IF EXISTS `chat_messaggi`;
+CREATE TABLE `chat_messaggi` (
+  `id` int(11) NOT NULL,
+  `id_mittente_utente` int(11) DEFAULT NULL,
+  `id_mittente_agente` int(11) DEFAULT NULL,
+  `id_destinatario_utente` int(11) DEFAULT NULL,
+  `id_destinatario_agente` int(11) DEFAULT NULL,
+  `id_immobile` int(11) DEFAULT NULL,
+  `messaggio` text NOT NULL,
+  `stato` enum('non_letto','letto') DEFAULT 'non_letto',
+  `data_invio` timestamp NOT NULL DEFAULT current_timestamp(),
+  `id_conversazione` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `chat_messaggi`
+--
+
+INSERT INTO `chat_messaggi` (`id`, `id_mittente_utente`, `id_mittente_agente`, `id_destinatario_utente`, `id_destinatario_agente`, `id_immobile`, `messaggio`, `stato`, `data_invio`, `id_conversazione`) VALUES
+(1, 1, NULL, NULL, 1, 60, 'Buongiorno, sarei interessato alla villa con giardino. È possibile visitarla questo weekend?', 'non_letto', '2025-05-20 14:06:11', 1),
+(2, NULL, 1, 1, NULL, 60, 'Salve Sig. Rossi, certamente! Possiamo organizzare una visita per sabato mattina alle 10:00 se le va bene.', 'non_letto', '2025-05-20 14:06:11', 1);
+
+-- --------------------------------------------------------
+
+--
 -- Struttura della tabella `contatti`
 --
 
@@ -112,8 +140,13 @@ DROP TABLE IF EXISTS `contatti`;
 CREATE TABLE `contatti` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) NOT NULL,
+  `id_utente` int(11) DEFAULT NULL,
+  `id_agente` int(11) DEFAULT NULL,
+  `id_immobile` int(11) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `messaggio` text NOT NULL,
+  `stato` enum('non_letto','letto','risposto') DEFAULT 'non_letto',
+  `parent_id` int(11) DEFAULT NULL,
   `data_invio` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -121,8 +154,33 @@ CREATE TABLE `contatti` (
 -- Dump dei dati per la tabella `contatti`
 --
 
-INSERT INTO `contatti` (`id`, `nome`, `email`, `messaggio`, `data_invio`) VALUES
-(1, 'Marco', 'marco@example.com', 'Vorrei maggiori informazioni sull\'appartamento in centro.', '2025-04-17 08:08:16');
+INSERT INTO `contatti` (`id`, `nome`, `id_utente`, `id_agente`, `id_immobile`, `email`, `messaggio`, `stato`, `parent_id`, `data_invio`) VALUES
+(1, 'Marco', NULL, NULL, NULL, 'marco@example.com', 'Vorrei maggiori informazioni sull\'appartamento in centro.', 'non_letto', NULL, '2025-04-17 08:08:16');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `conversazioni`
+--
+
+DROP TABLE IF EXISTS `conversazioni`;
+CREATE TABLE `conversazioni` (
+  `id` int(11) NOT NULL,
+  `id_utente` int(11) NOT NULL,
+  `id_agente` int(11) NOT NULL,
+  `id_immobile` int(11) DEFAULT NULL,
+  `titolo` varchar(255) DEFAULT NULL,
+  `stato` enum('aperta','chiusa','archiviata') DEFAULT 'aperta',
+  `data_creazione` timestamp NOT NULL DEFAULT current_timestamp(),
+  `ultimo_messaggio` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `conversazioni`
+--
+
+INSERT INTO `conversazioni` (`id`, `id_utente`, `id_agente`, `id_immobile`, `titolo`, `stato`, `data_creazione`, `ultimo_messaggio`) VALUES
+(1, 1, 1, 60, 'Informazioni Villa con giardino', 'aperta', '2025-05-20 14:06:11', NULL);
 
 -- --------------------------------------------------------
 
@@ -253,10 +311,35 @@ ALTER TABLE `categorie`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Indici per le tabelle `chat_messaggi`
+--
+ALTER TABLE `chat_messaggi`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_mittente_utente` (`id_mittente_utente`),
+  ADD KEY `id_mittente_agente` (`id_mittente_agente`),
+  ADD KEY `id_destinatario_utente` (`id_destinatario_utente`),
+  ADD KEY `id_destinatario_agente` (`id_destinatario_agente`),
+  ADD KEY `id_immobile` (`id_immobile`),
+  ADD KEY `id_conversazione` (`id_conversazione`);
+
+--
 -- Indici per le tabelle `contatti`
 --
 ALTER TABLE `contatti`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_contatti_utenti` (`id_utente`),
+  ADD KEY `fk_contatti_agenti` (`id_agente`),
+  ADD KEY `fk_contatti_immobili` (`id_immobile`),
+  ADD KEY `fk_contatti_parent` (`parent_id`);
+
+--
+-- Indici per le tabelle `conversazioni`
+--
+ALTER TABLE `conversazioni`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_utente` (`id_utente`),
+  ADD KEY `id_agente` (`id_agente`),
+  ADD KEY `id_immobile` (`id_immobile`);
 
 --
 -- Indici per le tabelle `immobili`
@@ -312,9 +395,21 @@ ALTER TABLE `categorie`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
+-- AUTO_INCREMENT per la tabella `chat_messaggi`
+--
+ALTER TABLE `chat_messaggi`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
 -- AUTO_INCREMENT per la tabella `contatti`
 --
 ALTER TABLE `contatti`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT per la tabella `conversazioni`
+--
+ALTER TABLE `conversazioni`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
@@ -344,6 +439,34 @@ ALTER TABLE `utenti`
 --
 -- Limiti per le tabelle scaricate
 --
+
+--
+-- Limiti per la tabella `chat_messaggi`
+--
+ALTER TABLE `chat_messaggi`
+  ADD CONSTRAINT `fk_messaggio_conversazione` FOREIGN KEY (`id_conversazione`) REFERENCES `conversazioni` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_messaggio_destinatario_agente` FOREIGN KEY (`id_destinatario_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_messaggio_destinatario_utente` FOREIGN KEY (`id_destinatario_utente`) REFERENCES `utenti` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_messaggio_immobile` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_messaggio_mittente_agente` FOREIGN KEY (`id_mittente_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_messaggio_mittente_utente` FOREIGN KEY (`id_mittente_utente`) REFERENCES `utenti` (`id`) ON DELETE SET NULL;
+
+--
+-- Limiti per la tabella `contatti`
+--
+ALTER TABLE `contatti`
+  ADD CONSTRAINT `fk_contatti_agenti` FOREIGN KEY (`id_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_contatti_immobili` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_contatti_parent` FOREIGN KEY (`parent_id`) REFERENCES `contatti` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_contatti_utenti` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE SET NULL;
+
+--
+-- Limiti per la tabella `conversazioni`
+--
+ALTER TABLE `conversazioni`
+  ADD CONSTRAINT `fk_conversazione_agente` FOREIGN KEY (`id_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_conversazione_immobile` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `fk_conversazione_utente` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE CASCADE;
 
 --
 -- Limiti per la tabella `immobili`

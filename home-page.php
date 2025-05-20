@@ -67,7 +67,7 @@ $result_agenti = $conn->query($sql_agenti);
         <ul>
             <li><a href="home-page.php"><i class="fas fa-home"></i> Home</a></li>
             <li><a href="immobili.php"><i class="fas fa-building"></i> Immobili</a></li>
-            <li><a href="contatti.php"><i class="fas fa-envelope"></i> Contatti</a></li>
+            <li><a href="chat.php"><i class="fas fa-envelope"></i> Contatti</a></li>
             <li><a href="faq.php"><i class="fas fa-question-circle"></i> FAQ</a></li>
             <?php if(isset($_SESSION['user_id'])): ?>
                 <li class="user-menu">

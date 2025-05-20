@@ -227,63 +227,9 @@ $categoria_display = isset($categorie_map[$immobile['categoria']]) ? $categorie_
                     <?php if(!empty($immobile['agente_nome'])): ?>
                     <div class="info-section">
                         <h2>Contatta l'agente</h2>
-                        <div class="agente-info">
-                            <div class="agente-avatar">
-                                <i class="fas fa-user-tie"></i>
-                            </div>
-                            <div class="agente-details">
-                                <h3><?php echo $immobile['agente_nome'] . ' ' . $immobile['agente_cognome']; ?></h3>
-                                <p><i class="fas fa-envelope"></i> <?php echo $immobile['agente_email']; ?></p>
-                                <?php if(!empty($immobile['agente_telefono'])): ?>
-                                <p><i class="fas fa-phone"></i> <?php echo $immobile['agente_telefono']; ?></p>
-                                <?php endif; ?>
-                                <a href="contatta_agente.php?id=<?php echo $immobile['agente_id']; ?>&immobile=<?php echo $immobile['id']; ?>" class="btn-contact">Contatta l'agente</a>
-                            </div>
-                        </div>
+                        <a href="contatta_agente.php?id=<?php echo $immobile['agente_id']; ?>&immobile=<?php echo $immobile['id']; ?>" class="btn-contact">Contatta l'agente</a>
                     </div>
                     <?php endif; ?>
-
-                    <div class="info-section">
-                        <h2>Richiedi informazioni</h2>
-                        <form class="contact-form" action="invia_richiesta.php" method="POST">
-                            <input type="hidden" name="immobile_id" value="<?php echo $immobile['id']; ?>">
-                            <div class="form-group">
-                                <label for="nome">Nome e Cognome <span class="required">*</span></label>
-                                <input type="text" id="nome" name="nome" required
-                                    <?php if(isset($_SESSION['user_id'])): ?>
-                                    value="<?php echo htmlspecialchars($_SESSION['user_name'] . ' ' . $_SESSION['user_cognome']); ?>"
-                                    <?php endif; ?>>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="email">Email <span class="required">*</span></label>
-                                <input type="email" id="email" name="email" required
-                                    <?php if(isset($_SESSION['user_id'])): ?>
-                                    value="<?php echo htmlspecialchars($_SESSION['user_email']); ?>"
-                                    <?php endif; ?>>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="telefono">Telefono</label>
-                                <input type="tel" id="telefono" name="telefono"
-                                    <?php if(isset($_SESSION['user_id']) && isset($_SESSION['user_telefono'])): ?>
-                                    value="<?php echo htmlspecialchars($_SESSION['user_telefono']); ?>"
-                                    <?php endif; ?>>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="messaggio">Messaggio <span class="required">*</span></label>
-                                <textarea id="messaggio" name="messaggio" rows="4" required>Salve, sono interessato a questo immobile (<?php echo $immobile['nome']; ?>). Vorrei ricevere maggiori informazioni.</textarea>
-                            </div>
-                            
-                            <div class="form-group privacy-check">
-                                <input type="checkbox" id="privacy" name="privacy" required>
-                                <label for="privacy">Ho letto e accetto la <a href="privacy.php" target="_blank">Privacy Policy</a> <span class="required">*</span></label>
-                            </div>
-                            
-                            <button type="submit" class="btn-submit">Invia richiesta</button>
-                        </form>
-                    </div>
                 </div>
             </div>
         </div>
