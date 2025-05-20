@@ -180,156 +180,8 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
     <title>Profilo Utente - Immobiliare</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="style_profilo-utente.css">
-    <link rel="stylesheet" href="style_immobili.css">
-    <style>
-        .message-container {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .success-message {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        .info-message {
-            background-color: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-        }
-        .immobili-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-        .immobile-card {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
-        }
-        .immobile-card:hover {
-            transform: translateY(-5px);
-        }
-        .immobile-img {
-            position: relative;
-            height: 200px;
-            overflow: hidden;
-        }
-        .immobile-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .categoria-tag {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(52, 152, 219, 0.9);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-        .immobile-details {
-            padding: 15px;
-        }
-        .immobile-details h3 {
-            margin-top: 0;
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-        }
-        .location {
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 10px;
-        }
-        .price {
-            font-weight: 700;
-            color: #2c3e50;
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-        }
-        .immobile-features {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 0.85rem;
-            color: #555;
-        }
-        .description {
-            font-size: 0.9rem;
-            color: #555;
-            margin-bottom: 15px;
-            line-height: 1.4;
-        }
-        .immobile-actions {
-            display: flex;
-            justify-content: space-between;
-        }
-        .btn-details {
-            background-color: #3498db;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 4px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-            font-size: 0.9rem;
-        }
-        .btn-details:hover {
-            background-color: #2980b9;
-            color: white;
-        }
-        .btn-remove {
-            background-color: #e74c3c;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 4px;
-            text-decoration: none;
-            transition: background-color 0.3s;
-        }
-        .btn-remove:hover {
-            background-color: #c0392b;
-            color: white;
-        }
-        .btn-view-all {
-            background-color: #3498db;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-block;
-            margin-top: 15px;
-            transition: background-color 0.3s;
-        }
-        .btn-view-all:hover {
-            background-color: #2980b9;
-            color: white;
-        }
-        .no-results {
-            text-align: center;
-            padding: 50px 20px;
-        }
-        .no-results i {
-            font-size: 3rem;
-            color: #3498db;
-            margin-bottom: 20px;
-        }
-        .no-results h3 {
-            margin-bottom: 15px;
-        }
-    </style>
+    <!-- Aggiungi parametro versione per forzare ricaricamento -->
+    <link rel="stylesheet" href="style_profilo-utente.css?v=1.1">
 </head>
 <body>
     
@@ -630,7 +482,9 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
                             </div>
                             <button type="submit" name="change_password" class="btn btn-primary">Aggiorna Password</button>
                         </form>
-                        
+                        <div class="text-end mt-1">
+                                    <a href="recupera-password.php" class="text-decoration-none">Password dimenticata?</a>
+                                </div>
                         <hr>
                         
                         <h4>Impostazioni di privacy</h4>

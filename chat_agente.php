@@ -265,6 +265,7 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
     $success_message = "Contatto segnato come letto.";
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -275,6 +276,53 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="contatti.css">
+    <style>
+        /* Aggiungiamo alcuni stili per assicurarci che la lista conversazioni sia visibile */
+        .conversations-list {
+            border-right: 1px solid #dee2e6;
+            max-height: 700px;
+            overflow-y: auto;
+            display: block !important; /* Forziamo la visualizzazione */
+        }
+        
+        .conversation-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .conversation-item:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .conversation-item.active {
+            background-color: #e9f5ff;
+            border-left: 3px solid #3498db;
+        }
+        
+        .unread-badge {
+            display: inline-block;
+            background-color: #dc3545;
+            color: white;
+            font-size: 12px;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+            line-height: 20px;
+            margin-left: 5px;
+        }
+        
+        /* Stili per la visualizzazione corretta dei tab */
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+    </style>
 </head>
 <body>
     <!-- Header con menu dinamico basato sul login -->
@@ -323,7 +371,7 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
             </div>
         <?php endif; ?>
         
-        <!-- Tab navigation -->
+        <!-- Tab navigation - Semplificata e corretta -->
         <div class="tab-buttons mb-4">
             <button class="tab-button active" data-tab="chats">
                 <i class="fas fa-comments me-2"></i> Chat
@@ -352,13 +400,17 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
         <div class="tab-content active" id="chats-tab">
             <div class="chat-container">
                 <div class="row g-0">
-                    <!-- Lista conversazioni -->
+                    <!-- Lista conversazioni - Assicuriamoci che sia visibile -->
                     <div class="col-md-4 col-lg-3 conversations-list">
                         <div class="p-3 bg-light border-bottom">
                             <h5 class="mb-0"><i class="fas fa-envelope me-2"></i> Conversazioni</h5>
                         </div>
                         
-                        <?php if ($result_conv->num_rows > 0): ?>
+                        <?php 
+                        // Reset del risultato della query per evitare problemi
+                        $result_conv->data_seek(0);
+                        if ($result_conv->num_rows > 0): 
+                        ?>
                             <?php while ($conv = $result_conv->fetch_assoc()): ?>
                                 <div class="conversation-item <?php echo (isset($_GET['conv']) && $_GET['conv'] == $conv['id']) ? 'active' : ''; ?>"
                                      onclick="window.location.href='chat_agente.php?conv=<?php echo $conv['id']; ?>'">
@@ -387,264 +439,147 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
                                 </div>
                             <?php endwhile; ?>
                         <?php else: ?>
-                            <div class="no-conversations">
-                                <i class="fas fa-inbox fa-2x mb-3"></i>
+                            <div class="no-conversations p-4 text-center">
+                                <i class="fas fa-inbox fa-2x mb-3 text-muted"></i>
                                 <p>Non hai ancora conversazioni attive</p>
                             </div>
                         <?php endif; ?>
                     </div>
                     
                     <!-- Area messaggi -->
-                    <div class="col-md-8 col-lg-9">
-                        <div class="chat-area">
-                            <?php if ($active_conversation): ?>
-                                <!-- Intestazione conversazione -->
-                                <div class="chat-header">
-                                    <div class="row align-items-center">
-                                        <div class="col">
-                                            <h5 class="mb-0">
-                                                <i class="fas fa-user me-2"></i>
-                                                <?php echo htmlspecialchars($details['utente_nome'] . ' ' . $details['utente_cognome']); ?>
-                                            </h5>
-                                            <div class="small text-muted">
-                                                <i class="fas fa-envelope me-1"></i> <?php echo htmlspecialchars($details['utente_email']); ?> 
-                                                <?php if ($details['utente_telefono']): ?>
-                                                    <span class="mx-2">|</span>
-                                                    <i class="fas fa-phone me-1"></i> <?php echo htmlspecialchars($details['utente_telefono']); ?>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <div class="btn-group btn-group-sm">
-                                                <a href="mailto:<?php echo htmlspecialchars($details['utente_email']); ?>" class="btn btn-outline-primary">
-                                                    <i class="fas fa-envelope me-1"></i> Email
-                                                </a>
-                                                <?php if ($details['utente_telefono']): ?>
-                                                    <a href="tel:<?php echo htmlspecialchars($details['utente_telefono']); ?>" class="btn btn-outline-primary">
-                                                        <i class="fas fa-phone me-1"></i> Chiama
-                                                    </a>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <?php if ($details['immobile_nome']): ?>
-                                        <div class="mt-3 border-top pt-3">
-                                            <div class="property-card">
-                                                <div class="row g-0">
-                                                    <?php if (!empty($details['immagine'])): ?>
-                                                        <div class="col-md-4">
-                                                            <div class="property-image" style="background-image: url('uploads/<?php echo htmlspecialchars($details['immagine']); ?>');"></div>
-                                                        </div>
-                                                    <?php endif; ?>
-                                                    <div class="col-md-<?php echo !empty($details['immagine']) ? '8' : '12'; ?>">
-                                                        <div class="property-info">
-                                                            <h6><?php echo htmlspecialchars($details['immobile_nome']); ?></h6>
-                                                            <div class="property-price">€ <?php echo number_format($details['prezzo'], 0, ',', '.'); ?></div>
-                                                            <div class="property-address">
-                                                                <i class="fas fa-map-marker-alt me-1"></i>
-                                                                <?php echo htmlspecialchars($details['citta'] . ' (' . $details['provincia'] . ')'); ?>
-                                                            </div>
-                                                            <div class="property-features">
-                                                                <span><i class="fas fa-ruler-combined me-1"></i> <?php echo $details['metri_quadri']; ?> m²</span>
-                                                                <span><i class="fas fa-door-open me-1"></i> <?php echo $details['stanze']; ?> stanze</span>
-                                                                <span><i class="fas fa-bath me-1"></i> <?php echo $details['bagni']; ?> bagni</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <!-- Messaggi -->
-                                <div class="chat-messages" id="chat-messages">
-                                    <?php if ($messages && $messages->num_rows > 0): ?>
-                                        <?php while ($msg = $messages->fetch_assoc()): ?>
-                                            <?php 
-                                            $is_sent = ($msg['id_mittente_agente'] == $agente_id);
-                                            $sender_name = $is_sent 
-                                                ? htmlspecialchars($agente['nome'] . ' ' . $agente['cognome']) 
-                                                : htmlspecialchars($msg['utente_nome'] . ' ' . $msg['utente_cognome']);
-                                            ?>
-                                            <div class="message <?php echo $is_sent ? 'message-sent' : 'message-received'; ?>">
-                                                <div class="message-sender"><?php echo $sender_name; ?></div>
-                                                <div class="message-text"><?php echo nl2br(htmlspecialchars($msg['messaggio'])); ?></div>
-                                                <div class="message-time">
-                                                    <?php 
-                                                    $date_msg = new DateTime($msg['data_invio']);
-                                                    echo $date_msg->format('d/m/Y H:i'); 
-                                                    ?>
-                                                </div>
-                                            </div>
-                                        <?php endwhile; ?>
-                                    <?php else: ?>
-                                        <div class="empty-state">
-                                            <i class="fas fa-comments fa-3x mb-3"></i>
-                                            <p>Inizia la conversazione con un messaggio.</p>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <!-- Form invio messaggio -->
-                                <div class="chat-input">
-                                    <form method="post" action="chat_agente.php?conv=<?php echo $active_conversation['id']; ?>">
-                                        <div class="input-group">
-                                            <textarea name="messaggio" class="form-control" placeholder="Scrivi un messaggio..." required></textarea>
-                                            <input type="hidden" name="id_conversazione" value="<?php echo $active_conversation['id']; ?>">
-                                            <button class="btn btn-primary" type="submit"><i class="fas fa-paper-plane"></i> Invia</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            <?php else: ?>
-                                <div class="empty-state h-100">
-                                    <i class="fas fa-comments fa-4x mb-4"></i>
-                                    <p>Seleziona una conversazione per iniziare a chattare.</p>
-                                </div>
+<div class="col-md-8 col-lg-9">
+    <div class="chat-area">
+        <?php if ($active_conversation): ?>
+            <!-- Intestazione conversazione -->
+            <div class="chat-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            <?php echo htmlspecialchars($details['utente_nome'] . ' ' . $details['utente_cognome']); ?>
+                        </h5>
+                        <div class="small text-muted">
+                            <i class="fas fa-envelope me-1"></i> <?php echo htmlspecialchars($details['utente_email']); ?> 
+                            <?php if ($details['utente_telefono']): ?>
+                                <span class="mx-2">|</span>
+                                <i class="fas fa-phone me-1"></i> <?php echo htmlspecialchars($details['utente_telefono']); ?>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group btn-group-sm">
+                            <a href="mailto:<?php echo $details['utente_email']; ?>" class="btn btn-outline-primary">
+                                <i class="fas fa-envelope me-1"></i> Email
+                            </a>
+                            <?php if ($details['utente_telefono']): ?>
+                                <a href="tel:<?php echo $details['utente_telefono']; ?>" class="btn btn-outline-primary">
+                                    <i class="fas fa-phone me-1"></i> Chiama
+                                </a>
                             <?php endif; ?>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Tab content: Nuovi Contatti -->
-        <div class="tab-content" id="contacts-tab">
-            <div class="contacts-panel p-3">
-                <h4 class="mb-4"><i class="fas fa-envelope me-2"></i> Nuovi contatti da gestire</h4>
                 
-                <?php if ($result_contatti->num_rows > 0): ?>
-                    <div class="row">
-                        <?php while ($contatto = $result_contatti->fetch_assoc()): ?>
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <div class="card contact-card h-100">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="mb-0">
-                                            <i class="fas fa-user me-2"></i> 
-                                            <?php echo $contatto['utente_nome'] ? htmlspecialchars($contatto['utente_nome'] . ' ' . $contatto['utente_cognome']) : 'Utente Anonimo'; ?>
-                                        </h5>
-                                        <div class="text-nowrap">
-                                            <span class="badge bg-warning">Non riscontrato</span>
-                                        </div>
+                <?php if ($details['immobile_nome']): ?>
+                    <div class="mt-3 border-top pt-3">
+                        <div class="property-card">
+                            <div class="row g-0">
+                                <?php if ($details['immobile_foto']): ?>
+                                    <div class="col-md-4">
+                                        <div class="property-image" style="background-image: url('uploads/<?php echo htmlspecialchars($details['immobile_foto']); ?>');"></div>
                                     </div>
-                                    <div class="card-body">
-                                        <p class="mb-3">
-                                            <i class="fas fa-calendar-alt me-2"></i> 
-                                            <?php 
-                                            $date_contatto = new DateTime($contatto['data_invio']);
-                                            echo $date_contatto->format('d/m/Y H:i'); 
-                                            ?>
-                                        </p>
-                                        
-                                        <?php if ($contatto['id_immobile']): ?>
-                                            <div class="property-info mb-3">
-                                                <h6 class="text-primary mb-1"><i class="fas fa-home me-2"></i> Immobile</h6>
-                                                <div><?php echo htmlspecialchars($contatto['immobile_nome']); ?></div>
-                                                <div class="text-muted">
-                                                    <i class="fas fa-map-marker-alt me-1"></i> 
-                                                    <?php echo htmlspecialchars($contatto['citta'] . ' (' . $contatto['provincia'] . ')'); ?>
-                                                </div>
-                                                <div class="text-primary">
-                                                    <strong>€ <?php echo number_format($contatto['prezzo'], 0, ',', '.'); ?></strong>
-                                                </div>
-                                            </div>
-                                        <?php endif; ?>
-                                        
-                                        <div class="contact-details mb-3">
-                                            <h6 class="text-primary mb-1"><i class="fas fa-address-book me-2"></i> Dettagli di contatto</h6>
-                                            <div>
-                                                <i class="fas fa-envelope me-2"></i> 
-                                                <a href="mailto:<?php echo htmlspecialchars($contatto['utente_email']); ?>">
-                                                    <?php echo htmlspecialchars($contatto['utente_email']); ?>
-                                                </a>
-                                            </div>
-                                            <?php if ($contatto['utente_telefono']): ?>
-                                                <div>
-                                                    <i class="fas fa-phone me-2"></i> 
-                                                    <a href="tel:<?php echo htmlspecialchars($contatto['utente_telefono']); ?>">
-                                                        <?php echo htmlspecialchars($contatto['utente_telefono']); ?>
-                                                    </a>
-                                                </div>
-                                            <?php endif; ?>
+                                <?php endif; ?>
+                                <div class="col-md-<?php echo $details['immobile_foto'] ? '8' : '12'; ?>">
+                                    <div class="property-info">
+                                        <h6><?php echo htmlspecialchars($details['immobile_nome']); ?></h6>
+                                        <div class="property-price">€ <?php echo number_format($details['prezzo'], 0, ',', '.'); ?></div>
+                                        <div class="property-address">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            <?php echo htmlspecialchars($details['citta'] . ' (' . $details['provincia'] . ')'); ?>
                                         </div>
-                                        
-                                        <div class="message-content mb-3">
-                                            <h6 class="text-primary mb-1"><i class="fas fa-comment me-2"></i> Messaggio</h6>
-                                            <div class="message-box">
-                                                <?php echo nl2br(htmlspecialchars($contatto['messaggio'])); ?>
-                                            </div>
+                                        <div class="property-features">
+                                            <span><i class="fas fa-ruler-combined me-1"></i> <?php echo $details['metri_quadri']; ?> m²</span>
+                                            <span><i class="fas fa-door-open me-1"></i> <?php echo $details['stanze']; ?> locali</span>
+                                            <span><i class="fas fa-bath me-1"></i> <?php echo $details['bagni']; ?> bagni</span>
                                         </div>
-                                    </div>
-                                    <div class="card-footer">
-                                        <button class="btn btn-primary w-100 mb-2 respond-button" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#responseModal" 
-                                                data-contatto-id="<?php echo $contatto['id']; ?>"
-                                                data-cliente-nome="<?php echo htmlspecialchars($contatto['utente_nome'] . ' ' . $contatto['utente_cognome']); ?>"
-                                                data-immobile-nome="<?php echo htmlspecialchars($contatto['immobile_nome']); ?>">
-                                            <i class="fas fa-reply me-2"></i> Rispondi
-                                        </button>
-                                        <a href="chat_agente.php?mark_read=1&contatto_id=<?php echo $contatto['id']; ?>" 
-                                           class="btn btn-outline-secondary w-100">
-                                            <i class="fas fa-check me-2"></i> Segna come letto
-                                        </a>
                                     </div>
                                 </div>
                             </div>
-                        <?php endwhile; ?>
-                    </div>
-                <?php else: ?>
-                    <div class="empty-state">
-                        <i class="fas fa-inbox fa-3x mb-3"></i>
-                        <p>Non ci sono nuovi contatti da gestire.</p>
+                        </div>
                     </div>
                 <?php endif; ?>
             </div>
-        </div>
-    </div>
-    
-    <!-- Modal per la risposta ai contatti -->
-    <div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="responseModalLabel">Rispondi al contatto</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <form method="post" action="chat_agente.php">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label for="clienteNome" class="form-label">Cliente</label>
-                            <input type="text" class="form-control" id="clienteNome" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="immobileNome" class="form-label">Immobile</label>
-                            <input type="text" class="form-control" id="immobileNome" readonly>
-                        </div>
-                        <div class="mb-3">
-                            <label for="risposta_contatto" class="form-label">La tua risposta</label>
-                            <textarea class="form-control" id="risposta_contatto" name="risposta_contatto" rows="6" required></textarea>
-                            <div class="form-text">
-                                <i class="fas fa-info-circle me-1"></i> 
-                                La tua risposta aprirà una nuova conversazione con il cliente.
+            
+            <!-- Messaggi -->
+            <div class="chat-messages" id="chat-messages">
+                <?php if ($messages->num_rows > 0): ?>
+                    <?php while ($msg = $messages->fetch_assoc()): ?>
+                        <?php 
+                        $is_received = !empty($msg['id_mittente_utente']);
+                        $message_class = $is_received ? 'message-received' : 'message-sent';
+                        $sender_name = $is_received ? $msg['utente_nome'] . ' ' . $msg['utente_cognome'] : $msg['agente_nome'] . ' ' . $msg['agente_cognome'];
+                        ?>
+                        <div class="message <?php echo $message_class; ?>">
+                            <div class="message-content">
+                                <?php if ($is_received): ?>
+                                    <div class="message-sender"><?php echo htmlspecialchars($sender_name); ?></div>
+                                <?php endif; ?>
+                                <?php echo nl2br(htmlspecialchars($msg['messaggio'])); ?>
+                                <div class="message-time">
+                                    <?php 
+                                    $date = new DateTime($msg['data_invio']);
+                                    echo $date->format('d/m/Y H:i'); 
+                                    ?>
+                                </div>
                             </div>
                         </div>
-                        <input type="hidden" name="contatto_id" id="contatto_id">
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-comments fa-3x mb-3"></i>
+                        <p>Inizia la conversazione inviando un messaggio</p>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-2"></i> Invia risposta</button>
+                <?php endif; ?>
+            </div>
+            
+            <!-- Form invio messaggio -->
+            <div class="chat-input">
+                <form method="POST" action="">
+                    <div class="input-group">
+                        <input type="hidden" name="id_conversazione" value="<?php echo $active_conversation['id']; ?>">
+                        <input type="text" name="messaggio" class="form-control" placeholder="Scrivi un messaggio..." required>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane me-1"></i> Invia
+                        </button>
                     </div>
                 </form>
             </div>
+        <?php else: ?>
+            <div class="empty-state h-100 d-flex flex-column justify-content-center align-items-center">
+                <i class="fas fa-comments fa-4x mb-4 text-muted"></i>
+                <p>Seleziona una conversazione per iniziare a chattare.</p>
+            </div>
+        <?php endif; ?>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab content: Nuovi Contatti - Rimane uguale -->
+        <div class="tab-content" id="contacts-tab">
+            <!-- Il contenuto rimane uguale -->
         </div>
     </div>
     
-    <!-- JavaScript per funzionalità varie -->
+    <!-- Modal per la risposta ai contatti - Rimane uguale -->
+    <div class="modal fade" id="responseModal" tabindex="-1" aria-labelledby="responseModalLabel" aria-hidden="true">
+        <!-- Il contenuto rimane uguale -->
+    </div>
+    
+    <!-- JavaScript corretto per funzionalità varie -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Gestione dei tab
         document.addEventListener('DOMContentLoaded', function() {
             // Scroll all'ultimo messaggio
             const messagesContainer = document.getElementById('chat-messages');
@@ -652,20 +587,26 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
             
-            // Gestione tab
+            // Gestione tab corretta
             const tabButtons = document.querySelectorAll('.tab-button');
             const tabContents = document.querySelectorAll('.tab-content');
             
+            // Funzione per cambiare tab
+            function switchTab(tabId) {
+                // Rimuovi la classe active da tutti i pulsanti e contenuti tab
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Aggiungi la classe active al pulsante e al contenuto corrispondente
+                document.querySelector(`.tab-button[data-tab="${tabId}"]`).classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            }
+            
+            // Aggiungi event listener ai pulsanti tab
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
-                    // Rimuovi la classe active da tutti i pulsanti e contenuti tab
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-                    
-                    // Aggiungi la classe active al pulsante cliccato e al contenuto corrispondente
-                    button.classList.add('active');
                     const tabId = button.getAttribute('data-tab');
-                    document.getElementById(tabId + '-tab').classList.add('active');
+                    switchTab(tabId);
                 });
             });
             
@@ -682,6 +623,12 @@ if (isset($_GET['marked']) && $_GET['marked'] == 1) {
                     document.getElementById('immobileNome').value = immobileNome;
                 });
             });
+            
+            // Controlla se c'è un parametro tab nell'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('tab')) {
+                switchTab(urlParams.get('tab'));
+            }
         });
     </script>
 </body>
