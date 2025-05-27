@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Mag 27, 2025 alle 09:18
+-- Creato il: Mag 27, 2025 alle 10:08
 -- Versione del server: 10.4.32-MariaDB
 -- Versione PHP: 8.2.12
 
@@ -139,7 +139,11 @@ CREATE TABLE `chat_messaggi` (
 INSERT INTO `chat_messaggi` (`id`, `id_mittente_utente`, `id_mittente_agente`, `id_destinatario_utente`, `id_destinatario_agente`, `id_immobile`, `messaggio`, `stato`, `data_invio`, `id_conversazione`) VALUES
 (1, 1, NULL, NULL, 1, 60, 'Buongiorno, sarei interessato alla villa con giardino. È possibile visitarla questo weekend?', 'non_letto', '2025-05-20 14:06:11', 1),
 (2, NULL, 1, 1, NULL, 60, 'Salve Sig. Rossi, certamente! Possiamo organizzare una visita per sabato mattina alle 10:00 se le va bene.', 'non_letto', '2025-05-20 14:06:11', 1),
-(3, 3, NULL, NULL, 1, 67, 'Benvenuto nella chat! Sono interessato all\'immobile: Monolocale turistico. Potrebbe fornirmi maggiori informazioni?', 'non_letto', '2025-05-26 06:14:11', 0);
+(4, 3, NULL, NULL, 1, 67, 'sdgfdgdgd', 'non_letto', '2025-05-27 07:40:22', NULL),
+(6, 3, NULL, NULL, 1, 65, 'Benvenuto nella chat! Sono interessato all\'immobile: Appartamento luminoso. Potrebbe fornirmi maggiori informazioni?', 'non_letto', '2025-05-27 07:58:06', NULL),
+(7, 3, NULL, NULL, 1, 65, 'fgdvd', 'non_letto', '2025-05-27 07:58:11', NULL),
+(8, 3, NULL, NULL, 1, 73, 'Benvenuto nella chat! Sono interessato all\'immobile: Monolocale centrale. Potrebbe fornirmi maggiori informazioni?', 'non_letto', '2025-05-27 08:06:46', 2),
+(9, 3, NULL, NULL, 2, 68, 'Benvenuto nella chat! Sono interessato all\'immobile: Appartamento signorile. Potrebbe fornirmi maggiori informazioni?', 'non_letto', '2025-05-27 08:06:58', 3);
 
 -- --------------------------------------------------------
 
@@ -191,8 +195,9 @@ CREATE TABLE `conversazioni` (
 --
 
 INSERT INTO `conversazioni` (`id`, `id_utente`, `id_agente`, `id_immobile`, `titolo`, `stato`, `data_creazione`, `ultimo_messaggio`) VALUES
-(0, 3, 1, 67, 'Informazioni Monolocale turistico', 'aperta', '2025-05-26 06:14:11', '2025-05-26 06:14:11'),
-(1, 1, 1, 60, 'Informazioni Villa con giardino', 'aperta', '2025-05-20 14:06:11', NULL);
+(1, 1, 1, 60, 'Informazioni Villa con giardino', 'aperta', '2025-05-20 14:06:11', NULL),
+(2, 3, 1, 73, 'Informazioni Monolocale centrale', 'aperta', '2025-05-27 08:06:46', '2025-05-27 08:06:46'),
+(3, 3, 2, 68, 'Informazioni Appartamento signorile', 'aperta', '2025-05-27 08:06:58', '2025-05-27 08:06:58');
 
 -- --------------------------------------------------------
 
@@ -373,7 +378,7 @@ CREATE TABLE `utenti` (
 INSERT INTO `utenti` (`id`, `nome`, `cognome`, `email`, `password`, `data_registrazione`, `telefono`, `indirizzo`, `foto_profilo`, `stato`) VALUES
 (1, 'Mario', 'Rossi', 'mario.rossi@example.com', 'password123', '2025-04-17 08:08:16', '3331234567', 'Via Roma, 10, Milano', NULL, 'attivo'),
 (2, 'Giulia', 'Verdi', 'giulia.verdi@example.com', 'password456', '2025-04-17 08:08:16', '3339876543', 'Via Garibaldi, 20, Roma', NULL, 'attivo'),
-(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$drZbgnC96mYteAgPi74md.QMMOMvyzrix9m9quozskWrrORnsrfkm', '2025-04-17 08:19:11', '3518966972', 'Via Fermi 8', NULL, 'attivo'),
+(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$drZbgnC96mYteAgPi74md.QMMOMvyzrix9m9quozskWrrORnsrfkm', '2025-04-17 08:19:11', '3518966972', 'Via Fermi 8', 'uploads/profile_photos/profile_3_1748331392.jpg', 'attivo'),
 (4, 'Paolo', 'Merisio', 'mersio@gmail.com', '$2y$10$ogn.m7vh8bnB9B4pPvICD.JNoSkePTQ.89Lh/kLFYVRArhHtWx/3S', '2025-05-06 07:56:52', '325346457476567', NULL, NULL, 'attivo');
 
 --
@@ -528,6 +533,12 @@ ALTER TABLE `categorie`
 -- AUTO_INCREMENT per la tabella `chat_messaggi`
 --
 ALTER TABLE `chat_messaggi`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+
+--
+-- AUTO_INCREMENT per la tabella `conversazioni`
+--
+ALTER TABLE `conversazioni`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
