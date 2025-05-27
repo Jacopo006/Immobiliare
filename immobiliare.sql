@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Creato il: Mag 20, 2025 alle 16:09
+-- Creato il: Mag 27, 2025 alle 09:18
 -- Versione del server: 10.4.32-MariaDB
--- Versione PHP: 8.0.30
+-- Versione PHP: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -46,14 +46,6 @@ CREATE TABLE `acquisti` (
   `data_acquisto` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
---
--- Dump dei dati per la tabella `acquisti`
---
-
-INSERT INTO `acquisti` (`id`, `id_immobile`, `id_utente`, `acconto`, `metodo_pagamento`, `piano_rate`, `importo_totale`, `tipo_acquisto`, `modalita_pagamento`, `stato_pagamento`, `payment_id`, `note`, `data_acquisto`) VALUES
-(8, 66, 3, 75000.00, '0', 48, 829054.56, 'acquisto', 'rate', 'in attesa', NULL, '', '2025-05-19 06:44:15'),
-(9, 63, 3, 48000.00, '0', 12, 493099.08, 'acquisto', 'rate', 'in attesa', NULL, '', '2025-05-19 06:58:49');
-
 -- --------------------------------------------------------
 
 --
@@ -80,6 +72,24 @@ CREATE TABLE `agenti_immobiliari` (
 INSERT INTO `agenti_immobiliari` (`id`, `nome`, `cognome`, `email`, `telefono`, `id_agenzia`, `data_assunzione`, `ruolo`, `Password`) VALUES
 (1, 'Luca', 'Bianchi', 'luca.bianchi@example.com', '3331112222', NULL, '2025-04-17 08:08:16', 'senior', 'Bianchi'),
 (2, 'Anna', 'Neri', 'anna.neri@example.com', '3334445555', NULL, '2025-04-17 08:08:16', 'junior', '');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `bonifici_bancari`
+--
+
+DROP TABLE IF EXISTS `bonifici_bancari`;
+CREATE TABLE `bonifici_bancari` (
+  `id` int(11) NOT NULL,
+  `id_immobile` int(11) DEFAULT NULL,
+  `id_utente` int(11) DEFAULT NULL,
+  `transfer_id` varchar(100) DEFAULT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `iban_destinatario` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -128,7 +138,8 @@ CREATE TABLE `chat_messaggi` (
 
 INSERT INTO `chat_messaggi` (`id`, `id_mittente_utente`, `id_mittente_agente`, `id_destinatario_utente`, `id_destinatario_agente`, `id_immobile`, `messaggio`, `stato`, `data_invio`, `id_conversazione`) VALUES
 (1, 1, NULL, NULL, 1, 60, 'Buongiorno, sarei interessato alla villa con giardino. È possibile visitarla questo weekend?', 'non_letto', '2025-05-20 14:06:11', 1),
-(2, NULL, 1, 1, NULL, 60, 'Salve Sig. Rossi, certamente! Possiamo organizzare una visita per sabato mattina alle 10:00 se le va bene.', 'non_letto', '2025-05-20 14:06:11', 1);
+(2, NULL, 1, 1, NULL, 60, 'Salve Sig. Rossi, certamente! Possiamo organizzare una visita per sabato mattina alle 10:00 se le va bene.', 'non_letto', '2025-05-20 14:06:11', 1),
+(3, 3, NULL, NULL, 1, 67, 'Benvenuto nella chat! Sono interessato all\'immobile: Monolocale turistico. Potrebbe fornirmi maggiori informazioni?', 'non_letto', '2025-05-26 06:14:11', 0);
 
 -- --------------------------------------------------------
 
@@ -180,6 +191,7 @@ CREATE TABLE `conversazioni` (
 --
 
 INSERT INTO `conversazioni` (`id`, `id_utente`, `id_agente`, `id_immobile`, `titolo`, `stato`, `data_creazione`, `ultimo_messaggio`) VALUES
+(0, 3, 1, 67, 'Informazioni Monolocale turistico', 'aperta', '2025-05-26 06:14:11', '2025-05-26 06:14:11'),
 (1, 1, 1, 60, 'Informazioni Villa con giardino', 'aperta', '2025-05-20 14:06:11', NULL);
 
 -- --------------------------------------------------------
@@ -231,6 +243,59 @@ INSERT INTO `immobili` (`id`, `nome`, `descrizione`, `prezzo`, `immagine`, `cate
 -- --------------------------------------------------------
 
 --
+-- Struttura della tabella `immobili_lock`
+--
+
+DROP TABLE IF EXISTS `immobili_lock`;
+CREATE TABLE `immobili_lock` (
+  `immobile_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `scadenza` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `immobili_locks`
+--
+
+DROP TABLE IF EXISTS `immobili_locks`;
+CREATE TABLE `immobili_locks` (
+  `id` int(11) NOT NULL,
+  `immobile_id` int(11) NOT NULL,
+  `agente_id` int(11) NOT NULL,
+  `scadenza` datetime NOT NULL,
+  `creato_il` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dump dei dati per la tabella `immobili_locks`
+--
+
+INSERT INTO `immobili_locks` (`id`, `immobile_id`, `agente_id`, `scadenza`, `creato_il`) VALUES
+(1, 61, 1, '2025-05-26 08:44:36', '2025-05-26 06:25:09'),
+(2, 63, 1, '2025-05-26 08:36:08', '2025-05-26 06:26:00');
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `pagamenti_stripe`
+--
+
+DROP TABLE IF EXISTS `pagamenti_stripe`;
+CREATE TABLE `pagamenti_stripe` (
+  `id` int(11) NOT NULL,
+  `id_immobile` int(11) DEFAULT NULL,
+  `id_utente` int(11) DEFAULT NULL,
+  `payment_intent_id` varchar(100) DEFAULT NULL,
+  `amount` decimal(10,2) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Struttura della tabella `preferiti`
 --
 
@@ -241,6 +306,29 @@ CREATE TABLE `preferiti` (
   `id_immobile` int(11) NOT NULL,
   `data_aggiunta` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Struttura della tabella `reset_password`
+--
+
+DROP TABLE IF EXISTS `reset_password`;
+CREATE TABLE `reset_password` (
+  `id` int(11) UNSIGNED NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `token` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `used` tinyint(1) DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dump dei dati per la tabella `reset_password`
+--
+
+INSERT INTO `reset_password` (`id`, `email`, `token`, `created_at`, `expires_at`, `used`) VALUES
+(1, 'jacopo.riccardi006@gmail.com', '90327fd8447d2d5767ea7492174d92d75c08ac2519f0b71c7b1ff726d4982114', '2025-05-26 06:37:58', '2025-05-26 07:37:58', 0);
 
 -- --------------------------------------------------------
 
@@ -274,6 +362,7 @@ CREATE TABLE `utenti` (
   `data_registrazione` timestamp NOT NULL DEFAULT current_timestamp(),
   `telefono` varchar(15) DEFAULT NULL,
   `indirizzo` varchar(255) DEFAULT NULL,
+  `foto_profilo` varchar(255) DEFAULT NULL,
   `stato` enum('attivo','disattivo') DEFAULT 'attivo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -281,11 +370,11 @@ CREATE TABLE `utenti` (
 -- Dump dei dati per la tabella `utenti`
 --
 
-INSERT INTO `utenti` (`id`, `nome`, `cognome`, `email`, `password`, `data_registrazione`, `telefono`, `indirizzo`, `stato`) VALUES
-(1, 'Mario', 'Rossi', 'mario.rossi@example.com', 'password123', '2025-04-17 08:08:16', '3331234567', 'Via Roma, 10, Milano', 'attivo'),
-(2, 'Giulia', 'Verdi', 'giulia.verdi@example.com', 'password456', '2025-04-17 08:08:16', '3339876543', 'Via Garibaldi, 20, Roma', 'attivo'),
-(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$drZbgnC96mYteAgPi74md.QMMOMvyzrix9m9quozskWrrORnsrfkm', '2025-04-17 08:19:11', '3518966972', 'Via Fermi 8', 'attivo'),
-(4, 'Paolo', 'Merisio', 'mersio@gmail.com', '$2y$10$ogn.m7vh8bnB9B4pPvICD.JNoSkePTQ.89Lh/kLFYVRArhHtWx/3S', '2025-05-06 07:56:52', '325346457476567', NULL, 'attivo');
+INSERT INTO `utenti` (`id`, `nome`, `cognome`, `email`, `password`, `data_registrazione`, `telefono`, `indirizzo`, `foto_profilo`, `stato`) VALUES
+(1, 'Mario', 'Rossi', 'mario.rossi@example.com', 'password123', '2025-04-17 08:08:16', '3331234567', 'Via Roma, 10, Milano', NULL, 'attivo'),
+(2, 'Giulia', 'Verdi', 'giulia.verdi@example.com', 'password456', '2025-04-17 08:08:16', '3339876543', 'Via Garibaldi, 20, Roma', NULL, 'attivo'),
+(3, 'Jacopo', 'Riccardi', 'jacopo.riccardi006@gmail.com', '$2y$10$drZbgnC96mYteAgPi74md.QMMOMvyzrix9m9quozskWrrORnsrfkm', '2025-04-17 08:19:11', '3518966972', 'Via Fermi 8', NULL, 'attivo'),
+(4, 'Paolo', 'Merisio', 'mersio@gmail.com', '$2y$10$ogn.m7vh8bnB9B4pPvICD.JNoSkePTQ.89Lh/kLFYVRArhHtWx/3S', '2025-05-06 07:56:52', '325346457476567', NULL, NULL, 'attivo');
 
 --
 -- Indici per le tabelle scaricate
@@ -303,6 +392,12 @@ ALTER TABLE `acquisti`
 ALTER TABLE `agenti_immobiliari`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indici per le tabelle `bonifici_bancari`
+--
+ALTER TABLE `bonifici_bancari`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indici per le tabelle `categorie`
@@ -350,12 +445,41 @@ ALTER TABLE `immobili`
   ADD KEY `agente_id` (`agente_id`);
 
 --
+-- Indici per le tabelle `immobili_lock`
+--
+ALTER TABLE `immobili_lock`
+  ADD PRIMARY KEY (`immobile_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `scadenza` (`scadenza`);
+
+--
+-- Indici per le tabelle `immobili_locks`
+--
+ALTER TABLE `immobili_locks`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `unique_immobile_lock` (`immobile_id`),
+  ADD KEY `idx_agente_id` (`agente_id`),
+  ADD KEY `idx_scadenza` (`scadenza`);
+
+--
+-- Indici per le tabelle `pagamenti_stripe`
+--
+ALTER TABLE `pagamenti_stripe`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Indici per le tabelle `preferiti`
 --
 ALTER TABLE `preferiti`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `utente_immobile` (`id_utente`,`id_immobile`),
   ADD KEY `fk_preferiti_immobili` (`id_immobile`);
+
+--
+-- Indici per le tabelle `reset_password`
+--
+ALTER TABLE `reset_password`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indici per le tabelle `transazioni`
@@ -389,6 +513,12 @@ ALTER TABLE `agenti_immobiliari`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
+-- AUTO_INCREMENT per la tabella `bonifici_bancari`
+--
+ALTER TABLE `bonifici_bancari`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT per la tabella `categorie`
 --
 ALTER TABLE `categorie`
@@ -398,19 +528,7 @@ ALTER TABLE `categorie`
 -- AUTO_INCREMENT per la tabella `chat_messaggi`
 --
 ALTER TABLE `chat_messaggi`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT per la tabella `contatti`
---
-ALTER TABLE `contatti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT per la tabella `conversazioni`
---
-ALTER TABLE `conversazioni`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT per la tabella `immobili`
@@ -419,54 +537,26 @@ ALTER TABLE `immobili`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=75;
 
 --
--- AUTO_INCREMENT per la tabella `preferiti`
+-- AUTO_INCREMENT per la tabella `immobili_locks`
 --
-ALTER TABLE `preferiti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+ALTER TABLE `immobili_locks`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
--- AUTO_INCREMENT per la tabella `transazioni`
+-- AUTO_INCREMENT per la tabella `pagamenti_stripe`
 --
-ALTER TABLE `transazioni`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+ALTER TABLE `pagamenti_stripe`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT per la tabella `utenti`
+-- AUTO_INCREMENT per la tabella `reset_password`
 --
-ALTER TABLE `utenti`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+ALTER TABLE `reset_password`
+  MODIFY `id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Limiti per le tabelle scaricate
 --
-
---
--- Limiti per la tabella `chat_messaggi`
---
-ALTER TABLE `chat_messaggi`
-  ADD CONSTRAINT `fk_messaggio_conversazione` FOREIGN KEY (`id_conversazione`) REFERENCES `conversazioni` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_messaggio_destinatario_agente` FOREIGN KEY (`id_destinatario_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_messaggio_destinatario_utente` FOREIGN KEY (`id_destinatario_utente`) REFERENCES `utenti` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_messaggio_immobile` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_messaggio_mittente_agente` FOREIGN KEY (`id_mittente_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_messaggio_mittente_utente` FOREIGN KEY (`id_mittente_utente`) REFERENCES `utenti` (`id`) ON DELETE SET NULL;
-
---
--- Limiti per la tabella `contatti`
---
-ALTER TABLE `contatti`
-  ADD CONSTRAINT `fk_contatti_agenti` FOREIGN KEY (`id_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_contatti_immobili` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_contatti_parent` FOREIGN KEY (`parent_id`) REFERENCES `contatti` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_contatti_utenti` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE SET NULL;
-
---
--- Limiti per la tabella `conversazioni`
---
-ALTER TABLE `conversazioni`
-  ADD CONSTRAINT `fk_conversazione_agente` FOREIGN KEY (`id_agente`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_conversazione_immobile` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_conversazione_utente` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE CASCADE;
 
 --
 -- Limiti per la tabella `immobili`
@@ -476,11 +566,18 @@ ALTER TABLE `immobili`
   ADD CONSTRAINT `immobili_ibfk_2` FOREIGN KEY (`agente_id`) REFERENCES `agenti_immobiliari` (`id`);
 
 --
--- Limiti per la tabella `preferiti`
+-- Limiti per la tabella `immobili_lock`
 --
-ALTER TABLE `preferiti`
-  ADD CONSTRAINT `fk_preferiti_immobili` FOREIGN KEY (`id_immobile`) REFERENCES `immobili` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_preferiti_utenti` FOREIGN KEY (`id_utente`) REFERENCES `utenti` (`id`) ON DELETE CASCADE;
+ALTER TABLE `immobili_lock`
+  ADD CONSTRAINT `fk_immobili_lock_agenti` FOREIGN KEY (`user_id`) REFERENCES `agenti_immobiliari` (`id`),
+  ADD CONSTRAINT `fk_immobili_lock_immobili` FOREIGN KEY (`immobile_id`) REFERENCES `immobili` (`id`) ON DELETE CASCADE;
+
+--
+-- Limiti per la tabella `immobili_locks`
+--
+ALTER TABLE `immobili_locks`
+  ADD CONSTRAINT `fk_immobili_locks_agente` FOREIGN KEY (`agente_id`) REFERENCES `agenti_immobiliari` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_immobili_locks_immobile` FOREIGN KEY (`immobile_id`) REFERENCES `immobili` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

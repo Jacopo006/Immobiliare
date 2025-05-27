@@ -182,8 +182,94 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Aggiungi parametro versione per forzare ricaricamento -->
     <link rel="stylesheet" href="style_profilo-utente.css?v=1.1">
+    <style>
+        /* Stili per la foto profilo */
+        .profile-photo-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        .profile-photo {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .photo-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .profile-photo-container:hover .photo-overlay {
+            opacity: 1;
+        }
+        
+        .photo-overlay i {
+            color: white;
+            font-size: 24px;
+        }
+        
+        .photo-actions {
+            margin-top: 15px;
+        }
+        
+        .photo-actions .btn {
+            margin: 0 5px;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .loading-spinner {
+            color: white;
+            font-size: 24px;
+        }
+        
+        /* Alert per messaggi foto */
+        .photo-alert {
+            margin-top: 15px;
+            display: none;
+        }
+    </style>
 </head>
 <body>
+    
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span class="ms-2">Caricamento...</span>
+        </div>
+    </div>
     
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -234,7 +320,31 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-3 text-center">
-                    <img src="https://via.placeholder.com/150" alt="Profile" class="rounded-circle img-fluid mb-3">
+                    <div class="profile-photo-container">
+                        <img src="<?php echo !empty($user['foto_profilo']) && file_exists($user['foto_profilo']) ? $user['foto_profilo'] : 'https://via.placeholder.com/150'; ?>" 
+                             alt="Profile" class="profile-photo" id="profileImage">
+                        <div class="photo-overlay" onclick="document.getElementById('file-input').click();">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Input file nascosto -->
+                    <input type="file" id="file-input" accept="image/*">
+                    
+                    <!-- Azioni foto -->
+                    <div class="photo-actions">
+                        <button class="btn btn-primary btn-sm" onclick="document.getElementById('file-input').click();">
+                            <i class="fas fa-upload"></i> Carica foto
+                        </button>
+                        <?php if (!empty($user['foto_profilo'])): ?>
+                        <button class="btn btn-danger btn-sm" onclick="removePhoto()">
+                            <i class="fas fa-trash"></i> Rimuovi
+                        </button>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <!-- Alert per messaggi foto -->
+                    <div class="alert photo-alert" id="photoAlert" role="alert"></div>
                 </div>
                 <div class="col-md-9">
                     <h1><?php echo htmlspecialchars($user['nome'] . ' ' . $user['cognome']); ?></h1>
@@ -462,54 +572,39 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
             <!-- Tab Sicurezza -->
             <div class="tab-pane fade <?php echo $active_tab == 'sicurezza' ? 'show active' : ''; ?>" 
                  id="security" role="tabpanel" aria-labelledby="security-tab">
-                <h3><i class="fas fa-lock"></i> Sicurezza account</h3>
+                <h3><i class="fas fa-lock"></i> Sicurezza Account</h3>
                 <div class="row">
                     <div class="col-md-8">
-                        <h4>Cambia password</h4>
-                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"] . '?tab=sicurezza'); ?>">
+                        <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>">
                             <div class="mb-3">
-                                <label for="current_password" class="form-label">Password attuale</label>
+                                <label for="current_password" class="form-label">Password Corrente</label>
                                 <input type="password" class="form-control" id="current_password" name="current_password" required>
                             </div>
                             <div class="mb-3">
-                                <label for="new_password" class="form-label">Nuova password</label>
+                                <label for="new_password" class="form-label">Nuova Password</label>
                                 <input type="password" class="form-control" id="new_password" name="new_password" required>
-                                <div class="form-text">La password deve contenere almeno 8 caratteri, una lettera maiuscola e un numero.</div>
+                                <div class="form-text">La password deve contenere almeno 8 caratteri.</div>
                             </div>
                             <div class="mb-3">
-                                <label for="confirm_password" class="form-label">Conferma nuova password</label>
+                                <label for="confirm_password" class="form-label">Conferma Nuova Password</label>
                                 <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
                             </div>
-                            <button type="submit" name="change_password" class="btn btn-primary">Aggiorna Password</button>
+                            <button type="submit" name="change_password" class="btn btn-warning">Cambia Password</button>
                         </form>
-                        <div class="text-end mt-1">
-                                    <a href="recupera-password.php" class="text-decoration-none">Password dimenticata?</a>
-                                </div>
-                        <hr>
-                        
-                        <h4>Impostazioni di privacy</h4>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 
-                            Le impostazioni di privacy ti permettono di controllare quali informazioni possono essere visualizzate dagli altri utenti.
-                            <br>Questa funzionalità sarà disponibile prossimamente.
-                        </div>
-                        
-                        <h4>Attività account</h4>
-                        <p>Ultimo accesso: <?php echo date('d/m/Y H:i'); ?></p>
                     </div>
                     <div class="col-md-4">
-                        <div class="security-tips card">
-                            <div class="card-header bg-info text-white">
-                                <i class="fas fa-shield-alt"></i> Consigli per la sicurezza
-                            </div>
-                            <div class="card-body">
-                                <ul class="list-unstyled">
-                                    <li><i class="fas fa-check-circle text-success"></i> Usa una password unica e complessa</li>
-                                    <li><i class="fas fa-check-circle text-success"></i> Cambia regolarmente la tua password</li>
-                                    <li><i class="fas fa-check-circle text-success"></i> Non condividere mai le tue credenziali</li>
-                                    <li><i class="fas fa-check-circle text-success"></i> Verifica sempre di aver effettuato il logout</li>
-                                    <li><i class="fas fa-check-circle text-success"></i> Controlla regolarmente le attività del tuo account</li>
-                                </ul>
+                        <div class="security-info">
+                            <h5><i class="fas fa-shield-alt"></i> Sicurezza Account</h5>
+                            <p>La tua password è stata modificata l'ultima volta il: 
+                                <strong><?php echo date('d/m/Y', strtotime($user['data_registrazione'])); ?></strong>
+                            </p>
+                            <div class="alert alert-info">
+                                <small>
+                                    <strong>Consigli per la sicurezza:</strong><br>
+                                    • Usa una password forte<br>
+                                    • Non condividere mai la tua password<br>
+                                    • Cambia la password regolarmente
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -519,64 +614,159 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
     </div>
 
     <!-- Footer -->
-    <footer class="bg-dark text-white py-4 mt-5">
+    <footer class="bg-dark text-white text-center py-4 mt-5">
         <div class="container">
-            <div class="row">
-                <div class="col-md-4">
-                    <h5>Immobiliare</h5>
-                    <p>La tua soluzione immobiliare di fiducia dal 2010.<br>
-                    Trova la casa dei tuoi sogni con noi!</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Via Roma 123, Milano<br>
-                    <i class="fas fa-phone"></i> +39 02 1234567<br>
-                    <i class="fas fa-envelope"></i> info@immobiliare-esempio.it</p>
-                </div>
-                <div class="col-md-4">
-                    <h5>Link utili</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="index.php" class="text-white"><i class="fas fa-home"></i> Home</a></li>
-                        <li><a href="immobili.php" class="text-white"><i class="fas fa-building"></i> Immobili</a></li>
-                        <li><a href="contatti.php" class="text-white"><i class="fas fa-envelope"></i> Contatti</a></li>
-                        <li><a href="faq.php" class="text-white"><i class="fas fa-question-circle"></i> FAQ</a></li>
-                        <li><a href="privacy-policy.php" class="text-white"><i class="fas fa-shield-alt"></i> Privacy Policy</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4">
-                    <h5>Seguici</h5>
-                    <div class="social-links">
-                        <a href="#" class="text-white me-2"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-white me-2"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white me-2"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white me-2"><i class="fab fa-linkedin-in"></i></a>
-                    </div>
-                    <h5 class="mt-3">Newsletter</h5>
-                    <form>
-                        <div class="input-group mb-3">
-                            <input type="email" class="form-control" placeholder="La tua email" aria-label="Email">
-                            <button class="btn btn-primary" type="button">Iscriviti</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <hr>
-            <div class="text-center">
-                <p>&copy; <?php echo date("Y"); ?> Immobiliare. Tutti i diritti riservati.</p>
-            </div>
+            <p>&copy; 2024 Immobiliare. Tutti i diritti riservati.</p>
         </div>
     </footer>
 
-    <!-- JavaScript -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Script per gestione foto profilo -->
     <script>
-        // Attiva il tab corretto all'avvio
+        // Gestione upload foto
+        document.getElementById('file-input').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // Validazioni lato client
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showPhotoAlert('Tipo file non supportato. Usa JPG, PNG o GIF.', 'danger');
+                return;
+            }
+            
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                showPhotoAlert('File troppo grande. Massimo 5MB.', 'danger');
+                return;
+            }
+            
+            // Mostra loading
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            // Crea FormData per upload
+            const formData = new FormData();
+            formData.append('foto_profilo', file);
+            
+            // Invia richiesta AJAX
+            fetch('upload-foto.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (data.success) {
+                    // Aggiorna immagine profilo
+                    document.getElementById('profileImage').src = data.foto_url + '?t=' + new Date().getTime();
+                    showPhotoAlert(data.message, 'success');
+                    
+                    // Ricarica la pagina dopo 2 secondi per aggiornare il pulsante rimuovi
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showPhotoAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                showPhotoAlert('Errore durante l\'upload della foto.', 'danger');
+                console.error('Error:', error);
+            });
+        });
+        
+        // Funzione per rimuovere foto
+        function removePhoto() {
+            if (!confirm('Sei sicuro di voler rimuovere la foto profilo?')) {
+                return;
+            }
+            
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            
+            fetch('remove-foto.php', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                
+                if (data.success) {
+                    // Ripristina immagine placeholder
+                    document.getElementById('profileImage').src = 'https://via.placeholder.com/150';
+                    showPhotoAlert(data.message, 'success');
+                    
+                    // Ricarica la pagina dopo 2 secondi per rimuovere il pulsante
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showPhotoAlert(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                showPhotoAlert('Errore durante la rimozione della foto.', 'danger');
+                console.error('Error:', error);
+            });
+        }
+        
+        // Mostra alert per foto
+        function showPhotoAlert(message, type) {
+            const alertDiv = document.getElementById('photoAlert');
+            alertDiv.className = `alert photo-alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.style.display = 'block';
+            
+            // Nascondi dopo 5 secondi
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Gestione attivazione tab dalla URL
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const tab = urlParams.get('tab');
-            if (tab) {
-                const triggerEl = document.querySelector('#profileTabs button[data-bs-target="#' + tab + '"]');
-                if (triggerEl) {
-                    const tabTrigger = new bootstrap.Tab(triggerEl);
-                    tabTrigger.show();
+            const activeTab = urlParams.get('tab');
+            
+            if (activeTab) {
+                const tabButton = document.getElementById(activeTab === 'preferiti' ? 'favorites-tab' : 
+                                                       activeTab === 'acquisti' ? 'purchases-tab' :
+                                                       activeTab === 'sicurezza' ? 'security-tab' : 'profile-tab');
+                if (tabButton) {
+                    const tab = new bootstrap.Tab(tabButton);
+                    tab.show();
                 }
+            }
+        });
+        
+        // Validazione password in tempo reale
+        document.getElementById('new_password').addEventListener('input', function() {
+            const password = this.value;
+            const feedback = this.nextElementSibling;
+            
+            if (password.length >= 8) {
+                feedback.className = 'form-text text-success';
+                feedback.textContent = 'Password valida ✓';
+            } else {
+                feedback.className = 'form-text text-danger';
+                feedback.textContent = 'La password deve contenere almeno 8 caratteri.';
+            }
+        });
+        
+        // Verifica corrispondenza password
+        document.getElementById('confirm_password').addEventListener('input', function() {
+            const password = document.getElementById('new_password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                this.setCustomValidity('Le password non corrispondono');
+                this.classList.add('is-invalid');
+            } else {
+                this.setCustomValidity('');
+                this.classList.remove('is-invalid');
             }
         });
     </script>
@@ -584,9 +774,5 @@ $active_tab = isset($_GET['tab']) ? $_GET['tab'] : 'profilo';
 </html>
 
 <?php
-// Chiudi le connessioni
-if (isset($stmt)) $stmt->close();
-if (isset($stmt_preferiti)) $stmt_preferiti->close();
-if (isset($stmt_acquisti) && $table_exists) $stmt_acquisti->close();
 $conn->close();
 ?>
