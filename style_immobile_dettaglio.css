@@ -1,230 +1,304 @@
-/* Stili per la pagina di dettaglio immobile */
+/* Stili moderni per la pagina di dettaglio immobile - Allineati alla home page */
 
-/* Variables */
+/* Variables aggiornate con palette della home page */
 :root {
     --primary-color: #3498db;
     --primary-dark: #2980b9;
-    --secondary-color: #e74c3c;
-    --text-color: #2c3e50;
-    --text-light: #7f8c8d;
-    --bg-color: #f5f7fa;
-    --border-color: #e1e8ed;
-    --card-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    --section-padding: 40px 0;
+    --primary-light: #5dade2;
+    --secondary-color: #2c3e50;
+    --accent-color: #e74c3c;
+    --accent-dark: #c0392b;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --text-color: #333;
+    --text-secondary: #7f8c8d;
+    --text-light: #bdc3c7;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f9f9f9;
+    --bg-gradient: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+    --border-color: #ecf0f1;
+    --border-light: #f4f6f7;
+    --shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 15px 35px rgba(0, 0, 0, 0.2);
+    --radius-sm: 5px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 30px;
+    --transition: all 0.3s ease;
 }
 
-/* Breadcrumb */
+/* Reset e base */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Montserrat', 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: var(--text-color);
+    background: var(--bg-secondary);
+    margin: 0;
+    padding: 0;
+}
+
+/* Breadcrumb moderno */
 .breadcrumb {
-    background-color: var(--bg-color);
-    padding: 15px 0;
-    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 0;
+    box-shadow: var(--shadow-sm);
+}
+
+.breadcrumb .container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     font-size: 14px;
-    margin-bottom: 20px;
+    font-weight: 500;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
 .breadcrumb a {
     color: var(--primary-color);
     text-decoration: none;
-    transition: color 0.3s ease;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
 }
 
 .breadcrumb a:hover {
+    background: rgba(52, 152, 219, 0.1);
     color: var(--primary-dark);
 }
 
 .breadcrumb span {
-    color: var(--text-light);
+    color: var(--text-secondary);
+    font-weight: 600;
+    padding: 6px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
 }
 
-/* Sezione Dettaglio Immobile */
+/* Header immobile con design della home page */
 #immobile-dettaglio {
-    padding: var(--section-padding);
+    padding: 50px 0;
+    background: var(--bg-secondary);
 }
 
 .immobile-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 30px;
-    flex-wrap: wrap;
+    background: var(--bg-primary);
+    padding: 30px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 40px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+}
+
+.immobile-header-content {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    align-items: start;
 }
 
 .immobile-title h1 {
-    font-size: 32px;
-    color: var(--text-color);
-    margin: 0 0 10px 0;
+    font-size: clamp(28px, 4vw, 40px);
     font-weight: 700;
+    color: var(--secondary-color);
+    margin: 0 0 15px 0;
+    line-height: 1.2;
 }
 
 .location {
-    color: var(--text-light);
-    font-size: 16px;
-    margin: 0;
     display: flex;
     align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+    padding: 8px 0;
 }
 
 .location i {
     color: var(--primary-color);
-    margin-right: 8px;
+    font-size: 18px;
 }
 
 .immobile-actions {
     display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 15px;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 20px;
 }
 
 .price {
-    font-size: 32px;
+    font-size: clamp(28px, 5vw, 42px);
     font-weight: 700;
-    color: var(--secondary-color);
+    color: var(--accent-color);
     margin: 0;
+    text-align: right;
 }
 
 .action-buttons {
     display: flex;
-    gap: 10px;
+    gap: 15px;
     flex-wrap: wrap;
 }
 
-.btn-favorite {
+/* Bottoni con stile della home page */
+.btn-favorite, .btn-purchase {
     display: inline-flex;
     align-items: center;
-    background-color: #ecf0f1;
-    color: var(--text-light);
-    padding: 10px 18px;
-    border-radius: 30px;
+    justify-content: center;
+    padding: 12px 24px;
+    border-radius: var(--radius-xl);
     text-decoration: none;
     font-weight: 600;
-    transition: all 0.3s ease;
+    font-size: 14px;
+    transition: var(--transition);
     border: none;
     cursor: pointer;
+    white-space: nowrap;
 }
 
-.btn-favorite i {
-    margin-right: 8px;
+.btn-favorite {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
 }
 
 .btn-favorite:hover, .btn-favorite.active {
-    background-color: var(--secondary-color);
+    background: var(--danger-color);
     color: white;
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--danger-color);
 }
 
 .btn-purchase {
-    display: inline-flex;
-    align-items: center;
-    background-color: var(--primary-color);
+    background: var(--bg-gradient);
     color: white;
-    padding: 10px 18px;
-    border-radius: 30px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    border: none;
-    cursor: pointer;
-}
-
-.btn-purchase i {
-    margin-right: 8px;
+    border: 2px solid transparent;
 }
 
 .btn-purchase:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
+    background: var(--primary-dark);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
 }
 
-/* Contenuto principale */
+.btn-favorite i, .btn-purchase i {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+/* Layout contenuto */
 .immobile-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-/* Galleria immagini */
+/* Galleria con fix z-index */
 .immobile-gallery {
     position: relative;
+    z-index: 5;
+    margin-bottom: 30px;
 }
 
 .main-image {
     position: relative;
-    border-radius: 12px;
+    z-index: 1;
     overflow: hidden;
-    box-shadow: var(--card-shadow);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
 }
 
 .main-image img {
+    position: relative;
+    z-index: 1;
     width: 100%;
     height: auto;
     display: block;
-    transition: transform 0.5s ease;
-}
-
-.main-image:hover img {
-    transform: scale(1.03);
 }
 
 .categoria-tag {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: rgba(52, 152, 219, 0.9);
-    color: white;
-    padding: 6px 14px;
-    border-radius: 30px;
-    font-size: 13px;
-    font-weight: 600;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    top: 20px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary-color);
+    padding: 8px 16px;
+    border-radius: var(--radius-xl);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: var(--shadow-md);
 }
 
-/* Informazioni immobile */
+/* Sezioni info con stile home page */
 .immobile-info {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 30px;
+    position: relative;
+    z-index: 15;
+    background: var(--bg-secondary);
 }
 
 .info-section {
-    background-color: white;
-    border-radius: 12px;
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
-    padding: 25px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    position: relative;
+    z-index: 20;
 }
 
 .info-section:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-lg);
 }
 
 .info-section h2 {
     font-size: 22px;
-    color: var(--text-color);
-    margin-top: 0;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid var(--border-color);
-    text-align: left;
-    font-weight: 600;
+    font-weight: 700;
+    color: var(--secondary-color);
+    margin: 0 0 25px 0;
     position: relative;
+    padding-bottom: 15px;
 }
 
-.info-section h2:after {
+.info-section h2::after {
     content: '';
     position: absolute;
-    bottom: -2px;
+    bottom: 0;
     left: 0;
-    width: 60px;
-    height: 2px;
+    width: 80px;
+    height: 3px;
     background-color: var(--primary-color);
+    border-radius: 2px;
 }
 
-/* Caratteristiche principali */
+/* Grid caratteristiche */
 .immobile-features {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 20px;
 }
 
@@ -233,205 +307,308 @@
     flex-direction: column;
     align-items: center;
     text-align: center;
-    padding: 15px 10px;
-    border-radius: 10px;
-    transition: background-color 0.3s ease;
+    padding: 20px 15px;
+    border-radius: var(--radius-md);
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-light);
+    transition: var(--transition);
 }
 
 .feature:hover {
-    background-color: rgba(236, 240, 241, 0.6);
+    background: var(--bg-primary);
+    border-color: var(--primary-light);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
 }
 
 .feature i {
-    font-size: 26px;
+    font-size: 32px;
     color: var(--primary-color);
     margin-bottom: 12px;
 }
 
 .feature span {
     color: var(--text-light);
-    font-size: 14px;
-    margin-bottom: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
 }
 
 .feature strong {
     color: var(--text-color);
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 18px;
+    font-weight: 700;
 }
 
 /* Descrizione */
 .description {
     line-height: 1.8;
-    color: var(--text-color);
-    font-size: 15px;
+    color: var(--text-secondary);
+    font-size: 16px;
+    text-align: justify;
 }
 
-/* Agente */
-.agente-info {
+.description p {
+    margin-bottom: 16px;
+}
+
+/* Tour virtuale */
+.virtual-tour-section {
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 40px;
+    position: relative;
+    z-index: 25;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+}
+
+.virtual-tour-header {
     display: flex;
     align-items: center;
-    gap: 20px;
-}
-
-.agente-avatar {
-    width: 80px;
-    height: 80px;
-    background-color: #ecf0f1;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-shrink: 0;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
-}
-
-.agente-avatar i {
-    font-size: 36px;
-    color: var(--primary-color);
-}
-
-.agente-details {
-    flex-grow: 1;
-}
-
-.agente-details h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
-    font-size: 18px;
-    color: var(--text-color);
-    font-weight: 600;
-}
-
-.agente-details p {
-    margin: 5px 0;
-    color: var(--text-light);
-    display: flex;
-    align-items: center;
-}
-
-.agente-details p i {
-    color: var(--primary-color);
-    margin-right: 10px;
-    width: 16px;
-    text-align: center;
-}
-
-.btn-contact {
-    display: inline-block;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    text-decoration: none;
-    font-weight: 600;
-    margin-top: 15px;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-}
-
-.btn-contact:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
-}
-
-/* Form di contatto */
-.contact-form {
-    display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
     gap: 15px;
 }
 
-.form-group {
-    margin-bottom: 5px;
+.virtual-tour-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: var(--secondary-color);
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
+.virtual-tour-header h2 i {
+    font-size: 28px;
+    color: var(--primary-color);
+}
+
+.tour-badge {
+    background: var(--bg-gradient);
+    color: white;
+    padding: 8px 16px;
+    border-radius: var(--radius-xl);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: var(--shadow-sm);
+}
+
+.virtual-tour-container {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: var(--bg-secondary);
+}
+
+.tour-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: var(--radius-md);
+}
+
+.tour-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 1000;
+}
+
+.tour-btn {
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
     color: var(--text-color);
 }
 
-.form-group input,
-.form-group textarea {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    font-size: 15px;
-    font-family: 'Montserrat', sans-serif;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-}
-
-.privacy-check {
-    display: flex;
-    align-items: flex-start;
-}
-
-.privacy-check input {
-    width: auto;
-    margin-right: 10px;
-    margin-top: 3px;
-}
-
-.privacy-check label a {
+.tour-btn:hover {
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
     color: var(--primary-color);
-    text-decoration: none;
-    transition: color 0.3s ease;
 }
 
-.privacy-check label a:hover {
-    color: var(--primary-dark);
-    text-decoration: underline;
-}
-
-.required {
-    color: var(--secondary-color);
-}
-
-.btn-submit {
-    background-color: var(--primary-color);
+.tour-btn.fullscreen {
+    background: var(--bg-gradient);
     color: white;
-    padding: 12px 25px;
+}
+
+.tour-btn.fullscreen:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+.tour-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 25px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.tour-features {
+    display: flex;
+    gap: 30px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+.tour-feature {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.tour-feature i {
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+.no-tour-message {
+    text-align: center;
+    padding: 60px 30px;
+    color: var(--text-light);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    border: 2px dashed var(--border-color);
+}
+
+.no-tour-message i {
+    font-size: 64px;
+    color: var(--border-color);
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.no-tour-message h3 {
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.no-tour-message p {
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.request-tour-btn {
+    background: var(--bg-gradient);
+    color: white;
+    padding: 12px 24px;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-xl);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.request-tour-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Mappa */
+#map-container {
+    height: 400px;
+    width: 100%;
+    border-radius: var(--radius-md);
+    margin-bottom: 20px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.address {
+    margin-top: 15px;
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.address i {
+    color: var(--primary-color);
+    font-size: 16px;
+}
+
+/* Bottone contatto agente */
+.btn-contact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    background: var(--bg-gradient);
+    color: white;
+    padding: 15px 24px;
+    border-radius: var(--radius-md);
+    text-decoration: none;
     font-weight: 600;
     font-size: 16px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    border: none;
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    margin-top: 10px;
-    align-self: flex-start;
 }
 
-.btn-submit:hover {
-    background-color: var(--primary-dark);
+.btn-contact:hover {
+    background: var(--primary-dark);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
-/* Immobili Simili */
+/* Sezione immobili simili */
 #immobili-simili {
-    background-color: var(--bg-color);
+    background: var(--bg-primary);
     padding: 50px 0;
-    border-top: 1px solid var(--border-color);
+    position: relative;
+    z-index: 30;
 }
 
 #immobili-simili h2 {
     text-align: center;
-    font-size: 26px;
+    font-size: 32px;
     margin-bottom: 40px;
-    color: var(--text-color);
-    position: relative;
+    color: var(--secondary-color);
     font-weight: 700;
+    position: relative;
 }
 
-#immobili-simili h2:after {
+#immobili-simili h2::after {
     content: '';
     display: block;
     width: 80px;
@@ -441,23 +618,28 @@
 }
 
 .immobili-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
     gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
 
-/* Card immobili */
+/* Card immobili con stile home page */
 .immobile-card {
-    background-color: white;
-    border-radius: 12px;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
     overflow: hidden;
-    box-shadow: var(--card-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow-md);
+    transition: var(--transition);
+    width: 350px;
 }
 
 .immobile-card:hover {
     transform: translateY(-10px);
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-lg);
 }
 
 .immobile-img {
@@ -470,7 +652,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: var(--transition);
 }
 
 .immobile-card:hover .immobile-img img {
@@ -482,175 +664,150 @@
 }
 
 .immobile-details h3 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    font-size: 18px;
-    color: var(--text-color);
-    font-weight: 600;
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--secondary-color);
+    line-height: 1.3;
 }
 
 .immobile-details .price {
-    margin: 10px 0;
+    margin: 15px 0;
     font-size: 22px;
+    font-weight: 700;
+    color: var(--accent-color);
+    text-align: left;
 }
 
 .immobile-details .immobile-features {
     display: flex;
     justify-content: space-between;
-    margin: 15px 0;
-    font-size: 14px;
+    margin: 20px 0;
+    font-size: 13px;
     color: var(--text-light);
+    font-weight: 500;
 }
 
 .immobile-details .immobile-features span {
     display: flex;
     align-items: center;
+    gap: 4px;
 }
 
 .immobile-details .immobile-features i {
-    margin-right: 5px;
     color: var(--primary-color);
-}
-
-.immobile-details .immobile-actions {
-    margin: 15px 0;
+    font-size: 14px;
 }
 
 .view-details {
-    margin-top: 15px;
+    margin-top: 20px;
 }
 
 .btn-details {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    background-color: var(--primary-color);
+    background: var(--primary-color);
     color: white;
-    padding: 10px 0;
-    border-radius: 8px;
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
     text-decoration: none;
     font-weight: 600;
-    text-align: center;
-    transition: background-color 0.3s ease;
+    font-size: 14px;
+    transition: var(--transition);
 }
 
 .btn-details:hover {
-    background-color: var(--primary-dark);
+    background: var(--primary-dark);
+    transform: translateY(-2px);
 }
 
 .no-similar {
     text-align: center;
     color: var(--text-light);
     font-size: 16px;
-    margin: 30px 0;
-    padding: 20px;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: var(--card-shadow);
+    margin: 40px 0;
+    padding: 40px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
 }
 
 .view-all {
     text-align: center;
-    margin-top: 30px;
+    margin-top: 50px;
 }
 
 .btn-view-all {
-    display: inline-block;
-    background-color: var(--primary-color);
+    display: inline-flex;
+    align-items: center;
+    background: var(--accent-color);
     color: white;
     padding: 12px 30px;
     text-decoration: none;
-    border-radius: 30px;
+    border-radius: var(--radius-xl);
     font-weight: 600;
-    transition: background-color 0.3s ease, transform 0.2s ease;
+    font-size: 16px;
+    transition: var(--transition);
 }
 
 .btn-view-all:hover {
-    background-color: var(--primary-dark);
+    background: var(--accent-dark);
     transform: translateY(-3px);
 }
 
-/* Responsive */
-@media screen and (max-width: 1024px) {
+/* Fix per il contenuto che va sopra l'immagine */
+.immobile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Fix per header se fisso */
+header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    background: var(--secondary-color);
+}
+
+/* Fix per il footer */
+footer {
+    position: relative;
+    z-index: 50;
+    background: var(--secondary-color);
+}
+
+/* Responsive design */
+@media screen and (max-width: 1200px) {
     .immobile-content {
-        grid-template-columns: 1fr;
-    }
-    
-    .immobile-header {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .immobile-actions {
-        margin-top: 15px;
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 50px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
 }
 
 @media screen and (max-width: 768px) {
-    .immobile-features {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .immobili-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    }
-    
-    .immobile-title h1 {
-        font-size: 26px;
-    }
-    
-    .price {
-        font-size: 26px;
-    }
-    
-    .immobile-content {
+    .immobile-header-content {
+        grid-template-columns: 1fr;
         gap: 20px;
     }
     
-    .info-section {
-        padding: 20px;
-    }
-}
-
-@media screen and (max-width: 576px) {
-    .immobile-features {
-        grid-template-columns: repeat(2, 1fr);
+    .immobile-actions {
+        align-items: stretch;
     }
     
-    .immobile-title h1 {
-        font-size: 22px;
-    }
-    
-    .breadcrumb {
-        font-size: 12px;
-    }
-    
-    .info-section h2 {
-        font-size: 20px;
-    }
-    
-    .agente-info {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .agente-details {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    
-    .agente-details p {
-        justify-content: center;
-    }
-    
-    .btn-submit, .btn-contact {
-        width: 100%;
-    }
-}
-
-@media screen and (max-width: 480px) {
-    .immobile-features {
-        grid-template-columns: 1fr;
+    .price {
+        text-align: left;
     }
     
     .action-buttons {
@@ -663,8 +820,93 @@
         justify-content: center;
     }
     
+    .immobile-features {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .virtual-tour-container {
+        height: 350px;
+    }
+    
+    .tour-controls {
+        top: 15px;
+        right: 15px;
+        gap: 8px;
+    }
+    
+    .tour-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .tour-features {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .immobili-grid {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .immobile-card {
+        width: 100%;
+        max-width: 350px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .immobile-header {
+        padding: 20px;
+    }
+    
+    .info-section {
+        padding: 20px;
+    }
+    
+    .immobile-features {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
     .immobile-details .immobile-features {
         flex-direction: column;
-        gap: 10px;
+        gap: 12px;
+    }
+    
+    .breadcrumb .container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .virtual-tour-section {
+        padding: 20px;
+    }
+    
+    .no-tour-message {
+        padding: 40px 20px;
+    }
+}
+
+/* Layout a griglia per 2 colonne responsive */
+.immobile-grid-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.immobile-grid-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 40px;
+    align-items: start;
+}
+
+/* Responsive fix per mobile */
+@media screen and (max-width: 768px) {
+    .immobile-grid-row {
+        grid-template-columns: 1fr;
     }
 }
